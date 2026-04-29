@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 # Supabase Setup
 SUPABASE_URL = "https://qtzmgxvjibivdgodcfwz.supabase.co"
-SUPABASE_KEY = "Sb_publishable_mLPBhmg1wc15tJOzbRd6Qg_nu30nfMC"
+SUPABASE_KEY = "sb_publishable_mLPBhmg1wc15tJOzbRd6Qg_nu30nfMC"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/')
