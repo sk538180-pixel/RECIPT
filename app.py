@@ -83,7 +83,5 @@ def view_page(url_path):
     else:
         return "Receipt Not Found!", 404
 
-# Vercel ko 'app' object chahiye hota hai run karne ke liye
 if __name__ == '__main__':
     app.run(debug=True)
-  
