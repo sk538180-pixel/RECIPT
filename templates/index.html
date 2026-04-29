@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Receipt Generator Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 15px; background: #f0f2f5; }
+        .box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+        input { width: 95%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;}
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; font-size: 16px; border-radius: 4px; cursor:pointer;}
+        .link-list li { margin-bottom: 15px; background: white; padding: 15px; border-radius: 5px; list-style-type: none;}
+        .btn-edit { background: #007bff; color: white; text-decoration: none; padding: 5px 10px; border-radius: 3px; font-size: 14px;}
+        .btn-delete { background: #dc3545; color: white; text-decoration: none; padding: 5px 10px; border-radius: 3px; font-size: 14px; margin-left: 5px;}
+        .highlight-input { border: 2px solid #007bff; background-color: #f8fbff; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Laggan Raseed Banayein</h2>
+        <form action="/create" method="POST">
+
+            <label style="font-size: 14px; font-weight: bold; color: #333;">Apna Pasand Ka Link Daalein:</label>
+            <input type="text" name="custom_url" class="highlight-input" placeholder="jaise: patna_123.com ya mera_link_xyz.com" required>
+            <hr style="border: 0; border-top: 1px solid #ddd; margin-bottom: 15px;">
+
+            <input type="text" name="district" placeholder="District" required>
+            <input type="text" name="anchal" placeholder="Anchal" required>
+            <input type="text" name="halka" placeholder="Halka" required>
+            <input type="text" name="mauja" placeholder="Mauja" required>
+            <input type="text" name="name" placeholder="Name (रैयत का नाम)" required>
+            <input type="text" name="name2" placeholder="Name2 (अभिभावक का नाम)" required>
+            <input type="text" name="pata" placeholder="Pata (पता)" required>
+            <input type="text" name="thana" placeholder="Thana" required>
+            <input type="text" name="khata" placeholder="Khata" required>
+            <input type="text" name="khesra" placeholder="Khesra" required>
+
+            <button type="submit">Generate Receipt Link</button>
+        </form>
+    </div>
+
+    <div class="box">
+        <h3>Aapke Banaye Hue Links</h3>
+        <ul class="link-list" style="padding-left: 0;">
+            {% for page in pages %}
+                <li>
+                    <strong>Link:</strong> <a href="/{{ page[1] }}" target="_blank">/{{ page[1] }}</a><br><br>
+                    <a href="/edit/{{ page[0] }}" class="btn-edit">Edit Code</a>
+                    <a href="/delete/{{ page[0] }}" class="btn-delete">Delete</a>
+                </li>
+            {% else %}
+                <p>Abhi tak koi receipt generate nahi hui hai.</p>
+            {% endfor %}
+        </ul>
+    </div>
+
+</body>
+</html>
