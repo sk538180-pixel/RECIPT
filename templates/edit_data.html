@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Form Data</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .btn-submit { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Form Data Edit Karein</h2>
+    <form action="/update_data/{{ id }}" method="POST">
+        <label>Custom Link:</label>
+        <input type="text" name="custom_url" value="{{ data.custom_url }}" required>
+
+        <label>District:</label> <input type="text" name="district" value="{{ data.District }}" required>
+        <label>Anchal:</label> <input type="text" name="anchal" value="{{ data.Anchal }}" required>
+        <label>Halka:</label> <input type="text" name="halka" value="{{ data.Halka }}" required>
+        <label>Mauja:</label> <input type="text" name="mauja" value="{{ data.Mauja }}" required>
+        <label>Naam:</label> <input type="text" name="name" value="{{ data.Name }}" required>
+        <label>Pita/Pati:</label> <input type="text" name="name2" value="{{ data.Name2 }}" required>
+        <label>Pata:</label> <input type="text" name="pata" value="{{ data.Pata }}" required>
+        <label>Thana No.:</label> <input type="text" name="thana" value="{{ data.Thana }}" required>
+        <label>Khata No.:</label> <input type="text" name="khata" value="{{ data.Khata }}" required>
+        <label>Khesra No.:</label> <input type="text" name="khesra" value="{{ data.Khesra }}" required>
+
+        <div style="background: #e9ecef; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <p style="margin: 0 0 5px 0; font-weight: bold; font-size: 14px;">Date Badlein:</p>
+            <input type="date" name="date" value="{{ data.Raw_Date }}" required>
+        </div>
+
+        <button type="submit" class="btn-submit">Update aur Save Karein</button>
+        <a href="/" style="display: block; text-align: center; margin-top: 15px; color: gray;">Back to Home</a>
+    </form>
+</div>
+</body>
+</html>
