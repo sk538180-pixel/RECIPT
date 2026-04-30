@@ -1,58 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Receipt Generator Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laggan Raseed Dashboard</title>
     <style>
-        body { font-family: Arial; padding: 15px; background: #f0f2f5; }
-        .box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
-        input { width: 95%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;}
-        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; font-size: 16px; border-radius: 4px; cursor:pointer;}
-        .link-list li { margin-bottom: 15px; background: white; padding: 15px; border-radius: 5px; list-style-type: none;}
-        .btn-edit { background: #007bff; color: white; text-decoration: none; padding: 5px 10px; border-radius: 3px; font-size: 14px;}
-        .btn-delete { background: #dc3545; color: white; text-decoration: none; padding: 5px 10px; border-radius: 3px; font-size: 14px; margin-left: 5px;}
-        .highlight-input { border: 2px solid #007bff; background-color: #f8fbff; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .btn-submit { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .receipt-list { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        .item { background: #f9f9f9; padding: 10px; border-bottom: 1px solid #ddd; margin-bottom: 10px; display: flex; flex-direction: column; }
+        .actions { margin-top: 10px; }
+        .actions a { text-decoration: none; padding: 5px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; margin-right: 5px; }
+        .btn-edit-data { background: #007bff; color: white; }
+        .btn-edit-html { background: #ffc107; color: black; }
+        .btn-delete { background: #dc3545; color: white; }
     </style>
 </head>
 <body>
+<div class="container">
+    <h2>Nayi Raseed Banayein</h2>
+    <form action="/create" method="POST">
+        <label>Custom Link:</label>
+        <input type="text" name="custom_url" value="citizen/payment_receipt.aspxd=hfhfhf5755gj535424fydseukkcg5655iudvjhgh55628igyd" required>
 
-    <div class="box">
-        <h2>Laggan Raseed Banayein</h2>
-        <form action="/create" method="POST">
+        <input type="text" name="district" placeholder="District" required>
+        <input type="text" name="anchal" placeholder="Anchal" required>
+        <input type="text" name="halka" placeholder="Halka" required>
+        <input type="text" name="mauja" placeholder="Mauja" required>
+        <input type="text" name="name" placeholder="Reiyat ka Naam" required>
+        <input type="text" name="name2" placeholder="Pita/Pati ka Naam" required>
+        <input type="text" name="pata" placeholder="Pata" required>
+        <input type="text" name="thana" placeholder="Thana No." required>
+        <input type="text" name="khata" placeholder="Khata No." required>
+        <input type="text" name="khesra" placeholder="Khesra No." required>
 
-            <label style="font-size: 14px; font-weight: bold; color: #333;">Apna Pasand Ka Link Daalein:</label>
-            <input type="text" name="custom_url" class="highlight-input" placeholder="jaise: patna_123.com ya mera_link_xyz.com" required>
-            <hr style="border: 0; border-top: 1px solid #ddd; margin-bottom: 15px;">
+        <div style="background: #e9ecef; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <p style="margin: 0 0 5px 0; font-weight: bold; font-size: 14px;">Date Select Karein (Calendar Se):</p>
+            <input type="date" name="date" required>
+        </div>
 
-            <input type="text" name="district" placeholder="District" required>
-            <input type="text" name="anchal" placeholder="Anchal" required>
-            <input type="text" name="halka" placeholder="Halka" required>
-            <input type="text" name="mauja" placeholder="Mauja" required>
-            <input type="text" name="name" placeholder="Name (रैयत का नाम)" required>
-            <input type="text" name="name2" placeholder="Name2 (अभिभावक का नाम)" required>
-            <input type="text" name="pata" placeholder="Pata (पता)" required>
-            <input type="text" name="thana" placeholder="Thana" required>
-            <input type="text" name="khata" placeholder="Khata" required>
-            <input type="text" name="khesra" placeholder="Khesra" required>
+        <button type="submit" class="btn-submit">Generate Raseed</button>
+    </form>
 
-            <button type="submit">Generate Receipt Link</button>
-        </form>
+    <div class="receipt-list">
+        <h3>Purani Raseedein</h3>
+        {% for id, url in pages %}
+        <div class="item">
+            <a href="/{{ url }}" target="_blank" style="color: #333; font-weight: bold; margin-bottom: 5px;">/{{ url[:35] }}...</a>
+            <div class="actions">
+                <a href="/edit_data/{{ id }}" class="btn-edit-data">Edit Form Data</a>
+                <a href="/edit/{{ id }}" class="btn-edit-html">Edit HTML Code</a>
+                <a href="/delete/{{ id }}" class="btn-delete" onclick="return confirm('Pakka delete karna hai?')">Delete</a>
+            </div>
+        </div>
+        {% endfor %}
     </div>
-
-    <div class="box">
-        <h3>Aapke Banaye Hue Links</h3>
-        <ul class="link-list" style="padding-left: 0;">
-            {% for page in pages %}
-                <li>
-                    <strong>Link:</strong> <a href="/{{ page[1] }}" target="_blank">/{{ page[1] }}</a><br><br>
-                    <a href="/edit/{{ page[0] }}" class="btn-edit">Edit Code</a>
-                    <a href="/delete/{{ page[0] }}" class="btn-delete">Delete</a>
-                </li>
-            {% else %}
-                <p>Abhi tak koi receipt generate nahi hui hai.</p>
-            {% endfor %}
-        </ul>
-    </div>
-
+</div>
 </body>
 </html>
