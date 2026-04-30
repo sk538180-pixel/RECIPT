@@ -2,287 +2,85 @@
     function printDiv(divName) {
         var printContents = document.getElementById(divName).innerHTML;
         var originalContents = document.body.innerHTML;
-
         document.body.innerHTML = printContents;
-
         window.print();
-
         document.body.innerHTML = originalContents;
     }
-
 </script>
 <style>
-    table {
-        border-collapse: collapse;
-        font-size: 13px;
-    }
-
-    .auto-style1 {
-        height: 17px;
-    }
-
-     #background{
-    position:absolute;
-    z-index:0;
-    background:white;
-    display:block;
-    min-height:50%;
-    min-width:50%;
-    color:yellow;
-}
-
-#content{
-    position:absolute;
-    z-index:1;
-}
-
-#bg-text
-{
-    color:#d3d3d366;
-    font-size:60px;
-    transform:rotate(300deg);
-    -webkit-transform:rotate(300deg);
-     text-align: center;
-}
+    table { border-collapse: collapse; font-size: 13px; }
+    .auto-style1 { height: 17px; }
+     #background{ position:absolute; z-index:0; background:white; display:block; min-height:50%; min-width:50%; color:yellow; }
+#content{ position:absolute; z-index:1; }
+#bg-text { color:#d3d3d366; font-size:60px; transform:rotate(300deg); -webkit-transform:rotate(300deg); text-align: center; }
 </style>
-
 </head><body><div id="printableArea">
     <div style="width: 200mm; height: auto; margin: auto;">
       <table width="100%" border="0" cellspacing="0" cellpadding="0">
             <tbody><tr>
-                <td width="30%"><img src="/static/download.png" align="absmiddle">
-
-	</td>
-               <td align="center" style="font-size:medium;"><b>राजस्व एवं भूमि सुधार विभाग,बिहार सरकार</b>
-                   <br><b>प्रपत्र-XIV ख</b>
-                      <br>   <b>(देखें नियम-10)</b>
-                   <br><b>लगान रसीद</b>
-               </td>
-            <td nowrap="nowrap">ऑनलाइन<br>
-
-                Running Unique No.: <b>13092401110703460638</b>
-                    <br>(Receipt No.)
-                </td>
+                <td width="30%"><img src="/static/download.png" align="absmiddle"></td>
+               <td align="center" style="font-size:medium;"><b>राजस्व एवं भूमि सुधार विभाग,बिहार सरकार</b><br><b>प्रपत्र-XIV ख</b><br><b>(देखें नियम-10)</b><br><b>लगान रसीद</b></td>
+            <td nowrap="nowrap">ऑनलाइन<br>Running Unique No.: <b>13092401110703460638</b><br>(Receipt No.)</td>
             </tr>
         </tbody></table>
 
-
-
         <table width="100%" border="1">
             <tbody><tr align="left">
-                <td width="36%">जिला :- <b>{{ District }}</b></td>
-                <td width="35%">अंचल :- <b>{{ Anchal }}</b></td>
+                <td width="36%">जिला :- <b>{{ District }}</b></td><td width="35%">अंचल :- <b>{{ Anchal }}</b></td>
                </tr>
              <tr align="left">
-                <td width="36%">हल्का :- <b>{{ Halka }}</b></td>
-                <td width="35%">मौजा :- <b>{{ Mauja }}</b></td>
+                <td width="36%">हल्का :- <b>{{ Halka }}</b></td><td width="35%">मौजा :- <b>{{ Mauja }}</b></td>
                </tr>
             <tr align="left">
-                <td width="36%">जमाबन्दी संख्या :- <b>427</b>
-                    <br>भाग वर्तमान :- <b>3         </b>
-                    <br>पृष्ठ संख्या :- <b>360</b>
-                    <br>कंप्यूटरीकृत जमाबन्दी संख्या :- <b>224127400086555</b>
-                </td>
+                <td width="36%">जमाबन्दी संख्या :- <b>427</b><br>भाग वर्तमान :- <b>3</b><br>पृष्ठ संख्या :- <b>360</b><br>कंप्यूटरीकृत जमाबन्दी संख्या :- <b>Thana127400086555</b></td>
                 <td width="35%">मौजा/थाना संख्या :- <b>{{ Thana }}</b></td>
                 </tr>
             <tr align="left">
-                <td width="36%">जमाबंदी रेयत का नाम :- <b>{{ Name }}</b><br>अभिभावक का नाम :- <b>{{ Name2 }}</b></td>
-                <td width="35%">पता :- <b>{{ Pata }}</b></td>
-
+                <td width="36%">जमाबंदी रेयत का नाम :- <b>{{ Name }}</b><br>अभिभावक का नाम :- <b>{{ Name2 }}</b></td><td width="35%">पता :- <b>{{ Pata }}</b></td>
             </tr>
-
-
-
-
         </tbody></table>
         <br>
         <table width="100%" border="1">
             <tbody><tr align="center">
-                <td width="36%">खाता संख्या</td>
-                <td width="35%">खेसरा संख्या</td>
-                <td width="29%">रकबा/डिसमिल</td>
+                <td width="36%">खाता संख्या</td><td width="35%">खेसरा संख्या</td><td width="29%">रकबा/डिसमिल</td>
             </tr>
             <tr align="center">
-                <td>
-
-                    <p style="width:200px;word-wrap: break-word"> {{ Khata }}</p>
-                </td>
-                <td>
-
-                   <p style="width:200px;word-wrap: break-word"> {{ Khesra }}</p>
-                </td>
-                <td>
-                    0 एकड़ 10 डिसमील 0 हेक्टर
-                </td>
+                <td><p style="width:200px;word-wrap: break-word"> {{ Khata }}</p></td>
+                <td><p style="width:200px;word-wrap: break-word"> {{ Khesra }}</p></td>
+                <td>0 एकड़ 10 डिसमील 0 हेक्टर</td>
             </tr>
         </tbody></table>
-        <div id="bg-text"><strong>Without Prejudice</strong> </div>
-        <br>
+        <div id="bg-text"><strong>Without Prejudice</strong> </div><br>
 
-        <table width="100%" border="0" cellspacing="0" cellpadding="0">
-            <tbody><tr>
-                <td align="center"><b>सालाना मांग(बकाया और वर्तमान) चालू वितीय वर्ष का</b></td>
-            </tr>
-        </tbody></table>
+        <table width="100%" border="0" cellspacing="0" cellpadding="0"><tbody><tr><td align="center"><b>सालाना मांग(बकाया और वर्तमान) चालू वितीय वर्ष का</b></td></tr></tbody></table>
 
         <table width="100%" border="1">
-                <tbody><tr>
-                <th style="width:32%">वितीय वर्ष</th>
-                <th style="width:8%">सालाना दर</th>
-                <th style="width:8%">बकाया</th>
-                <th style="width:8%">वर्तमान</th>
-                <th style="width:8%">सूद</th>
-                 <th style="width:8%">कुल</th>
-                <th style="width:32%">अभियुक्ति(बकाया का वर्ष कब से कब तक)</th>
-            </tr>
-            <tr>
-
-
-                <th style="width:32%">जमाबंदी लगान</th>
-                <td style="width:8%">10.00</td>
-                <td style="width:8%">70.00</td>
-                <td style="width:8%">10.00</td>
-                <td style="width:8%">0.00</td>
-                <td style="width:8%">80.00</td>
-                <td style="width:32%">2017-2018 से 2024-2025</td>
-                </tr>
-
-            <tr>
-
-                <th style="width:32%">सेस(लगान का 50 प्रतिशत स्वास्थ्य सेस, 50 प्रतिशत शिक्षा सेस, 25 प्रतिशत रोड सेस एवं 20 प्रतिशत कृषि सेस)</th>
-                <td style="width:8%">14.50</td>
-                <td style="width:8%">101.50</td>
-                <td style="width:8%">14.50</td>
-                <td style="width:8%">0.00</td>
-                <td style="width:8%">120.00</td>
-                <td style="width:32%">2017-2018 से 2024-2025</td>
-                </tr>
-
-            <tr>
-
-
-                <th>कुल</th>
-                <td>24.50</td>
-                <td>171.50</td>
-                <td>24.50</td>
-                <td>0.00</td>
-                <td>200.00</td>
-                <td>2017-2018 से 2024-2025</td>
-                </tr>
-
-
-
-
-
-
-
-
-
-
-
-
-
+                <tbody><tr><th style="width:32%">वितीय वर्ष</th><th style="width:8%">सालाना दर</th><th style="width:8%">बकाया</th><th style="width:8%">वर्तमान</th><th style="width:8%">सूद</th><th style="width:8%">कुल</th><th style="width:32%">अभियुक्ति(बकाया का वर्ष कब से कब तक)</th></tr>
+            <tr><th style="width:32%">जमाबंदी लगान</th><td style="width:8%">10.00</td><td style="width:8%">70.00</td><td style="width:8%">10.00</td><td style="width:8%">0.00</td><td style="width:8%">80.00</td><td style="width:32%">2017-2018 से 2024-2025</td></tr>
+            <tr><th style="width:32%">सेस(लगान का 50 प्रतिशत स्वास्थ्य सेस, 50 प्रतिशत शिक्षा सेस, 25 प्रतिशत रोड सेस एवं 20 प्रतिशत कृषि सेस)</th><td style="width:8%">14.50</td><td style="width:8%">101.50</td><td style="width:8%">14.50</td><td style="width:8%">0.00</td><td style="width:8%">120.00</td><td style="width:32%">2017-2018 से 2024-2025</td></tr>
+            <tr><th>कुल</th><td>24.50</td><td>171.50</td><td>24.50</td><td>0.00</td><td>200.00</td><td>2017-2018 से 2024-2025</td></tr>
         </tbody></table>
 
-
-        <table width="100%" border="0" cellspacing="0" cellpadding="0">
-            <tbody><tr>
-                <td align="center"><b>वसूली</b></td>
-            </tr>
-        </tbody></table>
+        <table width="100%" border="0" cellspacing="0" cellpadding="0"><tbody><tr><td align="center"><b>वसूली</b></td></tr></tbody></table>
 
         <table width="100%" border="1" cellspacing="0" cellpadding="0">
-            <tbody><tr>
-                <th>वितीय वर्ष</th>
-                <th>बकाया के विरुद्ध वसूली</th>
-                <th>वर्तमान मांग के विरुद्ध कुल वसूली</th>
-                <th>कुल वसूली</th>
-                <th>अवशेष राशि(बकाया का वर्ष कब से कब तक)</th>
-                <th>अभियुक्ति </th>
+            <tbody><tr><th>वितीय वर्ष</th><th>बकाया के विरुद्ध वसूली</th><th>वर्तमान मांग के विरुद्ध कुल वसूली</th><th>कुल वसूली</th><th>अवशेष राशि(बकाया का वर्ष कब से कब तक)</th><th>अभियुक्ति </th></tr>
+            <tr><th>लगान</th><td style="width:8%">70.00</td><td style="width:8%">10.00</td><td style="width:8%">80.00</td><td style="width:32%">2017-2018 से 2024-2025</td><td></td><td></td></tr>
+            <tr><th>सेस(लगान का 50 प्रतिशत स्वास्थ्य सेस, 50 प्रतिशत शिक्षा सेस, 25 प्रतिशत रोड सेस एवं 20 प्रतिशत कृषि सेस)</th><td style="width:8%">101.50</td><td style="width:8%">14.50</td><td style="width:8%">120.00</td><td style="width:32%">2017-2018 से 2024-2025</td><td></td></tr>
+            <tr><th>कुल</th><td>171.50</td><td>24.50</td><td>200.00</td><td>2017-2018 से 2024-2025</td><td></td></tr>
+        </tbody></table><br><br>
 
-
-            </tr><tr>
-
-
-                <th>लगान</th>
-
-                <td style="width:8%">70.00</td>
-                 <td style="width:8%">10.00</td>
-
-
-                <td style="width:8%">80.00</td>
-                <td style="width:32%">2017-2018 से 2024-2025</td>
-                <td></td>
-                <td></td>
-                </tr>
-
-            <tr>
-
-
-                <th>सेस(लगान का 50 प्रतिशत स्वास्थ्य सेस, 50 प्रतिशत शिक्षा सेस, 25 प्रतिशत रोड सेस एवं 20 प्रतिशत कृषि सेस)</th>
-
-                <td style="width:8%">101.50</td>
-                 <td style="width:8%">14.50</td>
-
-                <td style="width:8%">120.00</td>
-                <td style="width:32%">2017-2018 से 2024-2025</td>
-                  <td></td>
-                </tr>
-
-            <tr>
-
-
-                <th>कुल</th>
-
-                <td>171.50</td>
-                <td>24.50</td>
-
-                <td>200.00</td>
-                <td>2017-2018 से 2024-2025</td>
-                  <td></td>
-                </tr>
-
-
-
-
-
-        </tbody></table>
-    <br>
-    <br>
         <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-bottom: #666 solid 1px;">
-            <tbody><tr>
-                 <td><b>कुल बकाया-</b><strong>200.00</strong></td>
-
+            <tbody><tr><td><b>कुल बकाया-</b><strong>200.00</strong></td></tr>
+            <tr><td colspan="2"><b>वसूल की गयी राशि शब्दों में-</b> <b>Two Hundred Rupees </b></td>
+                <td align="right">तिथि-<b>{{ Date }}</b></td>
             </tr>
-
-            <tr>
-                <td colspan="2"><b>वसूल की गयी राशि शब्दों में-</b> <b>Two Hundred  Rupees </b></td>
-                <td align="right">तिथि-
-
-                    <b>13-09-2024</b>
-
-                </td>
-            </tr>
-        </tbody></table>
-    <br>
+        </tbody></table><br>
 
         Qr
-        <br>
-        <br>
-        <div style="font-size: 12px">
-            यह एक कम्पयुटर जनित प्रति है।<br>
-
-            किसी भी प्रकार की अशुद्धियों के लिए सम्बन्धित अंचलाधिकारी से संपर्क करें।
-        </div>
-
+        <br><br>
+        <div style="font-size: 12px">यह एक कम्पयुटर जनित प्रति है।<br>किसी भी प्रकार की अशुद्धियों के लिए सम्बन्धित अंचलाधिकारी से संपर्क करें।</div>
     </div>
-
-</div>
-<br>
-
-<div align="center">
-    <input type="button" value="Print" class="btn btn-inverse" style="width: 100px" onclick="printDiv('printableArea')">
-</div>
-
-
-</body><div style="background: rgba(50, 131, 168, 0.5); position: absolute; z-index: 2147483647;"></div></html>
+</div><br>
+<div align="center"><input type="button" value="Print" class="btn btn-inverse" style="width: 100px" onclick="printDiv('printableArea')"></div>
+</body></html>
