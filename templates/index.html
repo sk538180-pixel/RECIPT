@@ -21,7 +21,18 @@
 <body>
 <div class="container">
     <h2>Nayi Raseed Banayein</h2>
-    <form action="/create" method="POST">
+    <div style="margin-bottom: 20px; background: #e9ecef; padding: 10px; border-radius: 8px; text-align: center;">
+        <label style="margin-right: 20px; font-weight: bold; cursor: pointer;">
+            <input type="radio" name="form_type" value="data" checked onclick="toggleForms()"> Form Data Se
+        </label>
+        <label style="font-weight: bold; cursor: pointer;">
+            <input type="radio" name="form_type" value="html" onclick="toggleForms()"> Direct HTML Se
+        </label>
+    </div>
+
+    <!-- DATA FORM -->
+    <div id="form-data-section">
+        <form action="/create" method="POST">
         <label>Custom Link:</label>
         <input type="text" name="custom_url" value="citizen/payment_receipt.aspxd=hfhfhf5755gj535424fydseukkcg5655iudvjhgh55628igyd" required>
 
@@ -42,13 +53,42 @@
         </div>
 
         <button type="submit" class="btn-submit">Generate Raseed</button>
-    </form>
+        </form>
+    </div>
+
+    <!-- HTML FORM -->
+    <div id="form-html-section" style="display: none;">
+        <form action="/create_from_html" method="POST">
+            <label>Custom Link:</label>
+            <input type="text" name="custom_url" value="citizen/payment_receipt.aspxd=hfhfhf5755gj535424fydseukkcg5655ghbdfgfdbdxfgdfhfbsdghdsdtryfhfgbgsfrwekioiuhjfgsdfetrgiudvjhgh55628igyd" required>
+            
+            <label>जमाबंदी रेयत का नाम (Optional - HTML में बदलने के लिए):</label>
+            <input type="text" name="jamabandi_name" placeholder="नया नाम डालें (अगर बदलना हो)...">
+            
+            <label>अभिभावक का नाम (Optional - HTML में बदलने के लिए):</label>
+            <input type="text" name="guardian_name" placeholder="नया नाम डालें (अगर बदलना हो)...">
+
+            <label>हल्का (Optional - HTML में बदलने के लिए):</label>
+            <input type="text" name="halka_name" placeholder="नया हल्का डालें (अगर बदलना हो)...">
+
+            <label>मौजा (Optional - HTML में बदलने के लिए):</label>
+            <input type="text" name="mauja_name" placeholder="नया मौजा डालें (अगर बदलना हो)...">
+
+            <label>मौजा/थाना संख्या (Optional - HTML में बदलने के लिए):</label>
+            <input type="text" name="mauja_thana_name" placeholder="नया मौजा/थाना संख्या डालें (अगर बदलना हो)...">
+
+            <label>HTML Code:</label>
+            <textarea name="html_content" rows="15" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" placeholder="Yahan pura HTML paste karein..." required></textarea>
+            
+            <button type="submit" class="btn-submit" style="background: #007bff;">HTML Se Raseed Banayein</button>
+        </form>
+    </div>
 
     <div class="receipt-list">
         <h3>Purani Raseedein</h3>
-        {% for id, url in pages %}
+        {% for id, url, name in pages %}
         <div class="item">
-            <a href="/{{ url }}" target="_blank" style="color: #333; font-weight: bold; margin-bottom: 5px;">/{{ url[:35] }}...</a>
+            <a href="/{{ url }}" target="_blank" style="color: #333; font-weight: bold; margin-bottom: 5px;">{{ name }}</a>
             <div class="actions">
                 <a href="/edit_data/{{ id }}" class="btn-edit-data">Edit Form Data</a>
                 <a href="/edit/{{ id }}" class="btn-edit-html">Edit HTML Code</a>
@@ -58,5 +98,18 @@
         {% endfor %}
     </div>
 </div>
+
+<script>
+    function toggleForms() {
+        var formType = document.querySelector('input[name="form_type"]:checked').value;
+        if (formType === 'data') {
+            document.getElementById('form-data-section').style.display = 'block';
+            document.getElementById('form-html-section').style.display = 'none';
+        } else {
+            document.getElementById('form-data-section').style.display = 'none';
+            document.getElementById('form-html-section').style.display = 'block';
+        }
+    }
+</script>
 </body>
 </html>
