@@ -5,6 +5,7 @@ import base64
 from io import BytesIO
 import json
 from datetime import datetime
+import re
 
 app = Flask(__name__)
 # Session security ke liye
@@ -23,8 +24,20 @@ def index():
         return render_template('offline.html')
     
     # Login hai toh dashboard dikhao
-    response = supabase.table('receipts').select('id, url_path').order('id', desc=True).execute()
-    pages = [(row['id'], row['url_path']) for row in response.data]
+    response = supabase.table('receipts').select('id, url_path, html_content').order('id', desc=True).execute()
+    
+    pages = []
+    for row in response.data:
+        html = row.get('html_content', '')
+        display_name = "Naam Nahi Mila"
+        
+        # Extract name using Regex
+        match = re.search(r'जमाबंदी रेयत का नाम :- <b>(.*?)</b>\s*<br>अभिभावक का नाम', html, re.DOTALL | re.IGNORECASE)
+        if match and match.group(1).strip():
+            display_name = match.group(1).strip()
+            
+        pages.append((row['id'], row['url_path'], display_name))
+        
     return render_template('index.html', pages=pages)
 
 @app.route('/login', methods=['POST'])
@@ -87,6 +100,77 @@ def create():
 
     # Form ka data json format me store karna (taaki edit ho sake)
     form_data_json = json.dumps(data)
+
+    try:
+        supabase.table('receipts').insert({
+            'url_path': url_path, 
+            'html_content': final_html,
+            'form_data': form_data_json
+        }).execute()
+    except Exception as e:
+        return "Ye Link pehle se kisi aur ne bana liya hai, kripya back ja kar dusra link daalein."
+
+    return redirect(url_for('index'))
+
+@app.route('/create_from_html', methods=['POST'])
+def create_from_html():
+    if not session.get('logged_in'): return redirect(url_for('index'))
+
+    url_path = request.form['custom_url'].strip().replace(" ", "")
+    if url_path.startswith('/'):
+        url_path = url_path[1:]
+        
+    html_content = request.form['html_content']
+    
+    # Extract optional names to override in HTML
+    jamabandi_name = request.form.get('jamabandi_name', '').strip()
+    guardian_name = request.form.get('guardian_name', '').strip()
+    halka_name = request.form.get('halka_name', '').strip()
+    mauja_name = request.form.get('mauja_name', '').strip()
+    mauja_thana_name = request.form.get('mauja_thana_name', '').strip()
+    
+    if jamabandi_name:
+        pattern1 = re.compile(r'(जमाबंदी रेयत का नाम :- <b>)(.*?)(</b>\s*<br>अभिभावक का नाम :- <b>)', re.DOTALL | re.IGNORECASE)
+        html_content = pattern1.sub(rf'\g<1>{jamabandi_name}\g<3>', html_content)
+        
+    if guardian_name:
+        pattern2 = re.compile(r'(अभिभावक का नाम :- <b>)(.*?)(</b>\s*</td>\s*<td width="35%">पता)', re.DOTALL | re.IGNORECASE)
+        html_content = pattern2.sub(rf'\g<1>{guardian_name}\g<3>', html_content)
+
+    if halka_name:
+        pattern3 = re.compile(r'(<td width="36%">हल्का :- <b>)(.*?)(</b>\s*</td>\s*<td width="35%">मौजा)', re.DOTALL | re.IGNORECASE)
+        html_content = pattern3.sub(rf'\g<1>{halka_name}\g<3>', html_content)
+
+    if mauja_name:
+        pattern4 = re.compile(r'(<td width="35%">मौजा :- <b>)(.*?)(</b>\s*</td>\s*</tr>\s*<tr align="left">)', re.DOTALL | re.IGNORECASE)
+        html_content = pattern4.sub(rf'\g<1>{mauja_name}\g<3>', html_content)
+
+    if mauja_thana_name:
+        pattern5 = re.compile(r'(<td width="35%">मौजा/थाना संख्या :- <b>)(.*?)(</b>\s*</td>\s*</tr>\s*<tr align="left">)', re.DOTALL | re.IGNORECASE)
+        html_content = pattern5.sub(rf'\g<1>{mauja_thana_name}\g<3>', html_content)
+
+    # User's logo replacement requirement
+    html_content = html_content.replace('src="../img/logo2_new1.png"', 'src="/static/download.png"')
+
+    # Generate new QR code for the custom URL
+    full_receipt_link = request.host_url + url_path
+    qr_maker = qrcode.QRCode(version=8, error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
+    qr_maker.add_data(full_receipt_link)
+    qr_maker.make(fit=True)
+    img = qr_maker.make_image(fill_color="black", back_color="white")
+    img_io = BytesIO()
+    img.save(img_io, 'PNG')
+    img_io.seek(0)
+    qr_base64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
+    
+    # Replace the existing base64 image in the provided HTML with the new one
+    # This regex looks for src="data:image/...;base64,..." and replaces it with the new QR code
+    new_qr_src = f'src="data:image/png;base64,{qr_base64}"'
+    # We replace only the first occurrence assuming there's only one QR code at the end
+    final_html = re.sub(r'src="data:image/[^;]+;base64,[^"]+"', new_qr_src, html_content, count=1)
+
+    # empty JSON since there's no form data for HTML input
+    form_data_json = json.dumps({}) 
 
     try:
         supabase.table('receipts').insert({
