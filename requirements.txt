@@ -2,6 +2,4 @@ Flask
 supabase
 postgrest
 qrcode[pil]
-r e q u e s t s 
- 
- 
+requests
