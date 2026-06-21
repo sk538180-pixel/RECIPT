@@ -32,7 +32,7 @@
                 <td width="36%">हल्का :- <b>{{ Halka }}</b></td><td width="35%">मौजा :- <b>{{ Mauja }}</b></td>
                </tr>
             <tr align="left">
-                <td width="36%">जमाबन्दी संख्या :- <b>427</b><br>भाग वर्तमान :- <b>3</b><br>पृष्ठ संख्या :- <b>360</b><br>कंप्यूटरीकृत जमाबन्दी संख्या :- <b>224127400086555</b></td>
+                <td width="36%">जमाबन्दी संख्या :- <b>{{ JamabandiNo }}</b><br>भाग वर्तमान :- <b>{{ BhagVartaman }}</b><br>पृष्ठ संख्या :- <b>{{ PrishthSankhya }}</b><br>कंप्यूटरीकृत जमाबन्दी संख्या :- <b>224127400086555</b></td>
                 <td width="35%">मौजा/थाना संख्या :- <b>{{ Thana }}</b></td>
                 </tr>
             <tr align="left">
@@ -56,18 +56,18 @@
 
         <table width="100%" border="1">
                 <tbody><tr><th style="width:32%">वितीय वर्ष</th><th style="width:8%">सालाना दर</th><th style="width:8%">बकाया</th><th style="width:8%">वर्तमान</th><th style="width:8%">सूद</th><th style="width:8%">कुल</th><th style="width:32%">अभियुक्ति(बकाया का वर्ष कब से कब तक)</th></tr>
-            <tr><th style="width:32%">जमाबंदी लगान</th><td style="width:8%">10.00</td><td style="width:8%">70.00</td><td style="width:8%">10.00</td><td style="width:8%">0.00</td><td style="width:8%">80.00</td><td style="width:32%">2017-2018 से 2024-2025</td></tr>
-            <tr><th style="width:32%">सेस(लगान का 50 प्रतिशत स्वास्थ्य सेस, 50 प्रतिशत शिक्षा सेस, 25 प्रतिशत रोड सेस एवं 20 प्रतिशत कृषि सेस)</th><td style="width:8%">14.50</td><td style="width:8%">101.50</td><td style="width:8%">14.50</td><td style="width:8%">0.00</td><td style="width:8%">120.00</td><td style="width:32%">2017-2018 से 2024-2025</td></tr>
-            <tr><th>कुल</th><td>24.50</td><td>171.50</td><td>24.50</td><td>0.00</td><td>200.00</td><td>2017-2018 से 2024-2025</td></tr>
+            <tr><th style="width:32%">जमाबंदी लगान</th><td style="width:8%">10.00</td><td style="width:8%">70.00</td><td style="width:8%">10.00</td><td style="width:8%">0.00</td><td style="width:8%">80.00</td><td style="width:32%">{{ StartCurrentYear }}-{{ StartNextYear }} से {{ CurrentYear }}-{{ NextYear }}</td></tr>
+            <tr><th style="width:32%">सेस(लगान का 50 प्रतिशत स्वास्थ्य सेस, 50 प्रतिशत शिक्षा सेस, 25 प्रतिशत रोड सेस एवं 20 प्रतिशत कृषि सेस)</th><td style="width:8%">14.50</td><td style="width:8%">101.50</td><td style="width:8%">14.50</td><td style="width:8%">0.00</td><td style="width:8%">120.00</td><td style="width:32%">{{ StartCurrentYear }}-{{ StartNextYear }} से {{ CurrentYear }}-{{ NextYear }}</td></tr>
+            <tr><th>कुल</th><td>24.50</td><td>171.50</td><td>24.50</td><td>0.00</td><td>200.00</td><td>{{ StartCurrentYear }}-{{ StartNextYear }} से {{ CurrentYear }}-{{ NextYear }}</td></tr>
         </tbody></table>
 
         <table width="100%" border="0" cellspacing="0" cellpadding="0"><tbody><tr><td align="center"><b>वसूली</b></td></tr></tbody></table>
 
         <table width="100%" border="1" cellspacing="0" cellpadding="0">
             <tbody><tr><th>वितीय वर्ष</th><th>बकाया के विरुद्ध वसूली</th><th>वर्तमान मांग के विरुद्ध कुल वसूली</th><th>कुल वसूली</th><th>अवशेष राशि(बकाया का वर्ष कब से कब तक)</th><th>अभियुक्ति </th></tr>
-            <tr><th>लगान</th><td style="width:8%">70.00</td><td style="width:8%">10.00</td><td style="width:8%">80.00</td><td style="width:32%">2017-2018 से 2024-2025</td><td></td><td></td></tr>
-            <tr><th>सेस(लगान का 50 प्रतिशत स्वास्थ्य सेस, 50 प्रतिशत शिक्षा सेस, 25 प्रतिशत रोड सेस एवं 20 प्रतिशत कृषि सेस)</th><td style="width:8%">101.50</td><td style="width:8%">14.50</td><td style="width:8%">120.00</td><td style="width:32%">2017-2018 से 2024-2025</td><td></td></tr>
-            <tr><th>कुल</th><td>171.50</td><td>24.50</td><td>200.00</td><td>2017-2018 से 2024-2025</td><td></td></tr>
+            <tr><th>लगान</th><td style="width:8%">70.00</td><td style="width:8%">10.00</td><td style="width:8%">80.00</td><td style="width:32%">{{ StartCurrentYear }}-{{ StartNextYear }} से {{ CurrentYear }}-{{ NextYear }}</td><td></td><td></td></tr>
+            <tr><th>सेस(लगान का 50 प्रतिशत स्वास्थ्य सेस, 50 प्रतिशत शिक्षा सेस, 25 प्रतिशत रोड सेस एवं 20 प्रतिशत कृषि सेस)</th><td style="width:8%">101.50</td><td style="width:8%">14.50</td><td style="width:8%">120.00</td><td style="width:32%">{{ StartCurrentYear }}-{{ StartNextYear }} से {{ CurrentYear }}-{{ NextYear }}</td><td></td></tr>
+            <tr><th>कुल</th><td>171.50</td><td>24.50</td><td>200.00</td><td>{{ StartCurrentYear }}-{{ StartNextYear }} से {{ CurrentYear }}-{{ NextYear }}</td><td></td></tr>
         </tbody></table><br><br>
 
         <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-bottom: #666 solid 1px;">
