@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Money to Wallet</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .payment-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { margin-bottom: 5px; color: #333; }
+        .amount-select { display: flex; flex-direction: column; gap: 15px; margin: 20px 0; }
+        .btn-cancel { width: 100%; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; text-decoration: none; display: inline-block; box-sizing: border-box; }
+        .error { color: white; background: #dc3545; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; }
+        .qr-box { border: 2px solid #ddd; padding: 10px; border-radius: 10px; margin: 20px auto; width: fit-content; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="payment-box">
+        <h2>Add Money to Wallet</h2>
+        
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if qr_base64 %}
+            <p style="color: #666; font-size: 16px; margin-bottom: 20px;">Scan QR to pay exactly <strong style="font-size:22px; color:green;">₹{{ amount }}</strong></p>
+            <div class="qr-box">
+                <img src="data:image/png;base64,{{ qr_base64 }}" alt="UPI QR Code" style="width: 250px; height: 250px;">
+            </div>
+            <div class="loader"></div>
+            <p style="color: #007bff; font-weight: bold; font-size: 14px;">Waiting for payment confirmation...<br><span style="font-size:12px; color:#888;">Do not close this page.</span></p>
+
+            <script>
+                // Polling for status
+                setInterval(function() {
+                    fetch('/api/check_status/{{ txn_id }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'Approved') {
+                            window.location.href = '/';
+                        }
+                    })
+                    .catch(err => console.log(err));
+                }, 3000);
+            </script>
+        {% else %}
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Enter amount to pay via UPI</p>
+            <form action="/add_money" method="POST" id="payment-form">
+                <div class="amount-select">
+                    <label style="display:block; text-align:left; font-weight:bold; margin-bottom:5px; color:#555;">Enter Amount (₹):</label>
+                    <input type="number" name="amount" id="form-amount" placeholder="e.g. 250" min="1" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; text-align: center;">
+                    <button type="submit" style="width: 100%; padding: 15px; border: none; background: #007bff; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 18px; transition: 0.3s;">Generate QR</button>
+                </div>
+            </form>
+        {% endif %}
+
+        <a href="/" class="btn-cancel">Cancel</a>
+    </div>
+</body>
+</html>
