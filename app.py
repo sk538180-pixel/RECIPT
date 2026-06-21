@@ -153,6 +153,67 @@ def api_admin_stats():
         }
     return { "approved": 0, "pending": 0, "failed": 0, "total_amount": 0 }
 
+@app.route('/api/admin/requests', methods=['GET'])
+def api_admin_requests():
+    secret = request.args.get('secret')
+    if secret != "super_admin_secret_123":
+        return {"status": "error", "message": "Unauthorized"}, 401
+    
+    status = request.args.get('status', 'Pending')
+    # Fetch requests of this status
+    res = supabase.table('payment_requests').select('*, users(email, name)').eq('status', status).order('created_at', desc=True).execute()
+    if res.data:
+        requests_list = []
+        for r in res.data:
+            user_info = r.get('users') or {}
+            user_email = user_info.get('email', 'Unknown')
+            user_name = user_info.get('name', 'Unknown')
+            requests_list.append({
+                "id": r['id'],
+                "amount": r['amount'],
+                "status": r['status'],
+                "created_at": r['created_at'],
+                "email": user_email,
+                "name": user_name
+            })
+        return {"status": "success", "requests": requests_list}
+    return {"status": "success", "requests": []}
+
+@app.route('/api/admin/approve_request/<int:req_id>', methods=['POST'])
+def api_admin_approve_request(req_id):
+    secret = request.args.get('secret')
+    if secret != "super_admin_secret_123":
+        return {"status": "error", "message": "Unauthorized"}, 401
+        
+    pay_res = supabase.table('payment_requests').select('*').eq('id', req_id).execute()
+    if not pay_res.data or pay_res.data[0]['status'] != 'Pending':
+        return {"status": "error", "message": "Request not found or not pending"}, 400
+        
+    payment = pay_res.data[0]
+    user_id = payment['user_id']
+    amount = payment['amount']
+    
+    user_res = supabase.table('users').select('wallet_balance').eq('id', user_id).execute()
+    if user_res.data:
+        new_balance = (user_res.data[0]['wallet_balance'] or 0) + amount
+        supabase.table('users').update({'wallet_balance': new_balance}).eq('id', user_id).execute()
+        
+    supabase.table('payment_requests').update({'status': 'Approved'}).eq('id', req_id).execute()
+    return {"status": "success", "message": "Approved successfully"}
+
+@app.route('/api/admin/reject_request/<int:req_id>', methods=['POST'])
+def api_admin_reject_request(req_id):
+    secret = request.args.get('secret')
+    if secret != "super_admin_secret_123":
+        return {"status": "error", "message": "Unauthorized"}, 401
+        
+    pay_res = supabase.table('payment_requests').select('*').eq('id', req_id).execute()
+    if not pay_res.data:
+        return {"status": "error", "message": "Request not found"}, 400
+        
+    supabase.table('payment_requests').update({'status': 'Rejected'}).eq('id', req_id).execute()
+    return {"status": "success", "message": "Rejected successfully"}
+
 @app.route('/')
 def index():
     if not session.get('logged_in'):
