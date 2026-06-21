@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit HTML Raseed</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .btn-submit { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-cancel { width: 100%; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; text-decoration: none; display: inline-block; text-align: center; box-sizing: border-box; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #333; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Edit HTML Raseed</h2>
+    <p style="color: #666; font-size: 14px;">Yeh raseed 'Direct HTML' se banayi gayi thi. Yahan aap kuch chune hue details aur Custom Link badal sakte hain.</p>
+    
+    <form action="/update_html_data/{{ id }}" method="POST">
+        <label>Custom Link:</label>
+        <input type="text" name="custom_url" value="{{ data.custom_url }}" required>
+        
+        <label>जमाबंदी रेयत का नाम:</label>
+        <input type="text" name="jamabandi_name" value="{{ data.jamabandi_name }}" placeholder="रेयत का नाम डालें...">
+        
+        <label>अभिभावक का नाम:</label>
+        <input type="text" name="guardian_name" value="{{ data.guardian_name }}" placeholder="अभिभावक का नाम डालें...">
+
+        <label>हल्का:</label>
+        <input type="text" name="halka_name" value="{{ data.halka_name }}" placeholder="हल्का डालें...">
+
+        <label>मौजा:</label>
+        <input type="text" name="mauja_name" value="{{ data.mauja_name }}" placeholder="मौजा डालें...">
+
+        <label>मौजा/थाना संख्या:</label>
+        <input type="text" name="mauja_thana_name" value="{{ data.mauja_thana_name }}" placeholder="मौजा/थाना संख्या डालें...">
+
+        <button type="submit" class="btn-submit">Update Raseed</button>
+        <a href="/" class="btn-cancel">Cancel</a>
+    </form>
+</div>
+</body>
+</html>
