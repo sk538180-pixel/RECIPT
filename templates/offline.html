@@ -47,7 +47,7 @@
                 const { error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: 'http://127.0.0.1:5000/'
+                        redirectTo: window.location.origin + '/'
                     }
                 });
                 if (error) {
