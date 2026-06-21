@@ -3,75 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>No internet</title>
+    <title>Login - Laggan Raseed</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: #fff;
-            color: #202124;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            height: 100vh;
-            margin: 0;
-            padding-top: 10%;
-        }
-        .error-container {
-            max-width: 600px;
-            padding: 20px;
-        }
-        h1 { font-size: 1.6em; font-weight: normal; margin-bottom: 10px; }
-        p { font-size: 1em; color: #5f6368; line-height: 1.5; margin-bottom: 30px; }
-        .suggestions { color: #5f6368; font-size: 0.9em; margin-bottom: 40px; }
-        .suggestions ul { padding-left: 20px; }
-        .suggestions li { margin-bottom: 10px; }
-        .error-code { font-size: 0.8em; color: #5f6368; }
-
-        /* HIDDEN BUTTON CSS */
-        .secret-corner {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 50px;
-            height: 50px;
-            cursor: default; /* pointer nahi rakha taaki kisi ko shaq na ho */
-            z-index: 9999;
-        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { margin-bottom: 20px; color: #333; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .btn-google { width: 100%; padding: 12px; background: white; color: #555; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 20px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.3s; }
+        .btn-google:hover { background: #f9f9f9; }
+        .divider { margin: 20px 0; border-bottom: 1px solid #eee; position: relative; }
+        .divider span { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #999; font-size: 14px; }
+        .btn-admin { width: 100%; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="error-container">
-        <svg style="width:50px;height:50px;margin-bottom:20px;fill:#5f6368;" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-10h2v8h-2V7z"/>
-        </svg>
+    <div class="login-box">
+        <h2>Welcome to Laggan Raseed</h2>
+        <p style="color: #666; margin-bottom: 30px; font-size: 14px;">Generate & Manage Receipts</p>
+        
+        <button type="button" class="btn-google" onclick="loginWithGoogle()">
+            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            Sign in with Google
+        </button>
 
-        <h1>No internet</h1>
-        <p>Try:</p>
-        <div class="suggestions">
-            <ul>
-                <li>Checking the network cables, modem, and router</li>
-                <li>Reconnecting to Wi-Fi</li>
-            </ul>
-        </div>
-        <div class="error-code">ERR_INTERNET_DISCONNECTED</div>
+        <div class="divider"><span>OR</span></div>
+
+        <form action="/login" method="POST">
+            <input type="password" name="password" placeholder="Admin Password" required>
+            <button type="submit" class="btn-admin">Legacy Admin Login</button>
+        </form>
     </div>
 
-    <form id="secretForm" action="/login" method="POST" style="display: none;">
-        <input type="password" name="password" id="secretPassword">
-    </form>
-
-    <div class="secret-corner" onclick="askPassword()"></div>
-
+    <!-- Supabase JS Integration -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        function askPassword() {
-            let pass = prompt(""); // Khali prompt aayega taaki log confuse ho jayein
-            if (pass) {
-                document.getElementById("secretPassword").value = pass;
-                document.getElementById("secretForm").submit();
+        const supabaseUrl = 'https://qtzmgxvjibivdgodcfwz.supabase.co';
+        const supabaseKey = 'sb_publishable_mLPBhmg1wc15tJOzbRd6Qg_nu30nfMC';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function loginWithGoogle() {
+            try {
+                const { error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: 'http://127.0.0.1:5000/'
+                    }
+                });
+                if (error) {
+                    console.error('Error logging in:', error.message);
+                    alert("Login Error: " + error.message);
+                }
+            } catch (err) {
+                console.error("Try/Catch Error:", err);
+                alert("JS Error: " + err.message);
             }
         }
-    </script>
 
+        // Listen for login completion
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                const email = session.user.email;
+                const name = session.user.user_metadata?.full_name || email.split('@')[0];
+                
+                // Send session info to Flask Backend
+                fetch('/auth/set_session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email, name: name })
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.href = '/';
+                    } else {
+                        alert("Failed to sync session with server.");
+                    }
+                }).catch(err => {
+                    console.error("Fetch error:", err);
+                });
+            }
+        });
+    </script>
 </body>
 </html>
