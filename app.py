@@ -187,7 +187,7 @@ def index():
     for row in response.data:
         html = row.get('html_content', '')
         display_name = "Naam Nahi Mila"
-        match = re.search(r'जमाबंदी रेयत का नाम :- <b>(.*?)</b>\s*<br>अभिभावक का नाम', html, re.DOTALL | re.IGNORECASE)
+        match = re.search(r'जमाबंदी रेयत का नाम :- <b>(.*?)</b>', html, re.DOTALL | re.IGNORECASE)
         if match and match.group(1).strip():
             display_name = match.group(1).strip()
         pages.append((row['id'], row['url_path'], display_name))
