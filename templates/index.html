@@ -20,6 +20,55 @@
 </head>
 <body>
 <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: #e9ecef; border-radius: 8px;">
+        <div>
+            <strong>{{ email }}</strong><br>
+            {% if is_admin %}
+            <span style="font-size: 14px; color: #dc3545; font-weight: bold;">Legacy Admin Mode</span>
+            {% else %}
+            <span style="font-size: 14px; color: #555;">Wallet Balance: <strong>₹{{ wallet_balance }}</strong></span>
+            {% endif %}
+        </div>
+        <div>
+            {% if not is_admin %}
+            <a href="/add_money" style="background:#28a745; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px; margin-right: 5px;">+ Add Money</a>
+            {% endif %}
+            <a href="/logout" onclick="localStorage.clear();" style="background:#dc3545; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px;">Logout</a>
+        </div>
+    </div>
+    
+    {% if payment_msg %}
+    <div style="padding: 15px; background: #d4edda; color: #155724; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center;">
+        {{ payment_msg }}
+    </div>
+    {% endif %}
+    
+    {% if is_admin %}
+    {% if pending_payments %}
+    <div style="margin-bottom: 30px; background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba;">
+        <h3 style="margin-top: 0; color: #856404;">Pending Payments (Require Approval)</h3>
+        {% for p in pending_payments %}
+        <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong>User:</strong> {{ p.users.email }} <br>
+                <strong>Amount:</strong> ₹{{ p.amount }} <br>
+                <strong>UTR:</strong> {{ p.utr_number }} <br>
+                <small style="color: #666;">{{ p.created_at[:10] }}</small>
+            </div>
+            <div>
+                <form action="/admin/approve_payment/{{ p.id }}" method="POST" style="display:inline;">
+                    <button type="submit" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Approve</button>
+                </form>
+                <form action="/admin/reject_payment/{{ p.id }}" method="POST" style="display:inline;">
+                    <button type="submit" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-left: 5px;" onclick="return confirm('Pakka reject karna hai?');">Reject</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+
     <h2>Nayi Raseed Banayein</h2>
     <div style="margin-bottom: 20px; background: #e9ecef; padding: 10px; border-radius: 8px; text-align: center;">
         <label style="margin-right: 20px; font-weight: bold; cursor: pointer;">
@@ -46,6 +95,9 @@
         <input type="text" name="thana" placeholder="Thana No." required>
         <input type="text" name="khata" placeholder="Khata No." required>
         <input type="text" name="khesra" placeholder="Khesra No." required>
+        <input type="text" name="jamabandi_no" placeholder="जमाबन्दी संख्या" required>
+        <input type="text" name="bhag_vartaman" placeholder="भाग वर्तमान" required>
+        <input type="text" name="prishth_sankhya" placeholder="पृष्ठ संख्या" required>
 
         <div style="background: #e9ecef; padding: 15px; border-radius: 8px; margin: 10px 0;">
             <p style="margin: 0 0 5px 0; font-weight: bold; font-size: 14px;">Date Select Karein (Calendar Se):</p>
@@ -77,8 +129,8 @@
             <label>मौजा/थाना संख्या (Optional - HTML में बदलने के लिए):</label>
             <input type="text" name="mauja_thana_name" placeholder="नया मौजा/थाना संख्या डालें (अगर बदलना हो)...">
 
-            <label>HTML Code:</label>
-            <textarea name="html_content" rows="15" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" placeholder="Yahan pura HTML paste karein..." required></textarea>
+            <label>Purani Raseed Ka Link (Public URL):</label>
+            <input type="url" name="source_url" placeholder="Yahan purani raseed ka link paste karein..." required style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
             
             <button type="submit" class="btn-submit" style="background: #007bff;">HTML Se Raseed Banayein</button>
         </form>
