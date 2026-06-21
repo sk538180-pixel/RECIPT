@@ -385,23 +385,23 @@ def create_from_html():
     mauja_thana_name = request.form.get('mauja_thana_name', '').strip()
     
     if jamabandi_name:
-        pattern1 = re.compile(r'(जमाबंदी रेयत का नाम :- <b>)(.*?)(</b>\s*<br>अभिभावक का नाम :- <b>)', re.DOTALL | re.IGNORECASE)
+        pattern1 = re.compile(r'(जमाबंदी रेयत का नाम :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
         html_content = pattern1.sub(rf'\g<1>{jamabandi_name}\g<3>', html_content)
         
     if guardian_name:
-        pattern2 = re.compile(r'(अभिभावक का नाम :- <b>)(.*?)(</b>\s*</td>\s*<td width="35%">पता)', re.DOTALL | re.IGNORECASE)
+        pattern2 = re.compile(r'(अभिभावक का नाम :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
         html_content = pattern2.sub(rf'\g<1>{guardian_name}\g<3>', html_content)
 
     if halka_name:
-        pattern3 = re.compile(r'(<td width="36%">हल्का :- <b>)(.*?)(</b>\s*</td>\s*<td width="35%">मौजा)', re.DOTALL | re.IGNORECASE)
+        pattern3 = re.compile(r'(हल्का :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
         html_content = pattern3.sub(rf'\g<1>{halka_name}\g<3>', html_content)
 
     if mauja_name:
-        pattern4 = re.compile(r'(<td width="35%">मौजा :- <b>)(.*?)(</b>\s*</td>\s*</tr>\s*<tr align="left">)', re.DOTALL | re.IGNORECASE)
+        pattern4 = re.compile(r'(मौजा :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
         html_content = pattern4.sub(rf'\g<1>{mauja_name}\g<3>', html_content)
 
     if mauja_thana_name:
-        pattern5 = re.compile(r'(<td width="35%">मौजा/थाना संख्या :- <b>)(.*?)(</b>\s*</td>\s*</tr>\s*<tr align="left">)', re.DOTALL | re.IGNORECASE)
+        pattern5 = re.compile(r'(मौजा/थाना संख्या :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
         html_content = pattern5.sub(rf'\g<1>{mauja_thana_name}\g<3>', html_content)
 
     # User's logo replacement requirement
@@ -420,7 +420,8 @@ def create_from_html():
     
     # Replace the existing img tag with a new one
     new_qr_tag = f'<img src="data:image/png;base64,{qr_base64}" width="125" height="125" style="border: none; filter: blur(0.15px);">'
-    final_html = re.sub(r'<img[^>]+src="data:image/[^;]+;base64,[^"]+"[^>]*>', new_qr_tag, html_content, count=1)
+    qr_pattern = re.compile(r'<img[^>]+(?:src="[^"]*barcode\.php[^"]*"|src="data:image/[^;]+;base64,[^"]+"|width="125")[^>]*>', re.IGNORECASE)
+    final_html = qr_pattern.sub(new_qr_tag, html_content, count=1)
 
     # empty JSON since there's no form data for HTML input
     form_data_json = json.dumps({}) 
