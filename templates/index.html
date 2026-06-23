@@ -16,7 +16,77 @@
         .btn-edit-data { background: #007bff; color: white; }
         .btn-edit-html { background: #ffc107; color: black; }
         .btn-delete { background: #dc3545; color: white; }
-        html { scroll-behavior: smooth; }
+        
+        /* Modal Popup Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s ease-out;
+        }
+        .modal-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+            animation: slideUp 0.2s ease-out;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .modal-title {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        .modal-close {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-close:hover {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        .modal-body {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        @keyframes fadeIn {
+            from { background: rgba(0, 0, 0, 0); }
+            to { background: rgba(0, 0, 0, 0.5); }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -32,7 +102,7 @@
         </div>
         <div>
             {% if not is_admin %}
-            <a href="#wallet-history-section" style="background:#17a2b8; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px; margin-right: 5px;">Wallet History</a>
+            <button onclick="showWalletModal()" style="background:#17a2b8; color:white; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px; margin-right: 5px; cursor: pointer;">Wallet History</button>
             <a href="/add_money" style="background:#28a745; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px; margin-right: 5px;">+ Add Money</a>
             {% endif %}
             <a href="/logout" onclick="localStorage.clear();" style="background:#dc3545; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px;">Logout</a>
@@ -278,28 +348,38 @@
             </div>
             {% endfor %}
 
-            <!-- Normal User Wallet Transaction History -->
-            <div id="wallet-history-section" style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
-                <h3>Wallet Transaction History 💳</h3>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; max-height: 250px; overflow-y: auto;">
-                    {% for tx in wallet_txs %}
-                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>{{ tx.description }}</strong><br>
-                            <small style="color: #666;">{{ tx.created_at.replace('T', ' ')[:16] }}</small>
-                        </div>
-                        <span style="font-weight: bold; font-size: 14px; color: {% if tx.transaction_type == 'Credit' %}#28a745{% else %}#dc3545{% endif %};">
-                            {% if tx.transaction_type == 'Credit' %}+{% endif %}{{ tx.amount }}
-                        </span>
-                    </div>
-                    {% else %}
-                    <div style="color: #888; font-style: italic; text-align: center; padding: 10px 0;">No transaction records found.</div>
-                    {% endfor %}
-                </div>
-            </div>
         {% endif %}
     </div>
 </div>
+
+<!-- Modal Popup for Wallet History -->
+{% if not is_admin %}
+<div id="wallet-modal" class="modal-overlay" onclick="closeWalletModalOutside(event)">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Wallet Transaction History 💳</h3>
+            <button class="modal-close" onclick="closeWalletModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; max-height: 250px; overflow-y: auto;">
+                {% for tx in wallet_txs %}
+                <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>{{ tx.description }}</strong><br>
+                        <small style="color: #666;">{{ tx.created_at.replace('T', ' ')[:16] }}</small>
+                    </div>
+                    <span style="font-weight: bold; font-size: 14px; color: {% if tx.transaction_type == 'Credit' %}#28a745{% else %}#dc3545{% endif %};">
+                        {% if tx.transaction_type == 'Credit' %}+{% endif %}{{ tx.amount }}
+                    </span>
+                </div>
+                {% else %}
+                <div style="color: #888; font-style: italic; text-align: center; padding: 10px 0;">No transaction records found.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <script>
     function toggleForms() {
@@ -310,6 +390,27 @@
         } else {
             document.getElementById('form-data-section').style.display = 'none';
             document.getElementById('form-html-section').style.display = 'block';
+        }
+    }
+    
+    function showWalletModal() {
+        var modal = document.getElementById('wallet-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+    
+    function closeWalletModal() {
+        var modal = document.getElementById('wallet-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    function closeWalletModalOutside(event) {
+        var modal = document.getElementById('wallet-modal');
+        if (event.target === modal) {
+            closeWalletModal();
         }
     }
 </script>
