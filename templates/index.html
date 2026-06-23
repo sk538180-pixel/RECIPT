@@ -174,6 +174,31 @@
                     <span>▼</span>
                 </h3>
                 <div id="receipts-{{ u_id }}" style="display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
+                    
+                    <!-- User Wallet history collapsible -->
+                    <div style="margin-bottom: 15px; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef;">
+                        <h4 style="margin: 0 0 5px 0; color: #495057; font-size: 13px; cursor: pointer;" onclick="toggleUserWallet('{{ u_id }}')">
+                            Wallet Transaction History 💳 <span id="wallet-arrow-{{ u_id }}" style="float: right;">▼</span>
+                        </h4>
+                        <div id="wallet-{{ u_id }}" style="display: none; max-height: 150px; overflow-y: auto; font-size: 12px; margin-top: 8px;">
+                            {% set u_txs = wallet_txs.get(u_id, []) %}
+                            {% for tx in u_txs %}
+                            <div style="padding: 6px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>{{ tx.description }}</strong><br>
+                                    <small style="color: #888;">{{ tx.created_at.replace('T', ' ')[:16] }}</small>
+                                </div>
+                                <span style="font-weight: bold; color: {% if tx.transaction_type == 'Credit' %}#28a745{% else %}#dc3545{% endif %};">
+                                    {% if tx.transaction_type == 'Credit' %}+{% endif %}{{ tx.amount }}
+                                </span>
+                            </div>
+                            {% else %}
+                            <div style="color: #999; font-style: italic;">No wallet transactions logged.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 13px; font-weight: bold;">User's Receipts:</h4>
                     {% for id, url, name in u_receipts %}
                     <div class="item" style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #eee;">
                         <a href="/{{ url }}" target="_blank" style="color: #007bff; font-weight: bold; text-decoration: none;">{{ name }}</a>
@@ -224,6 +249,17 @@
                         el.style.display = 'none';
                     }
                 }
+                function toggleUserWallet(userId) {
+                    var el = document.getElementById('wallet-' + userId);
+                    var arr = document.getElementById('wallet-arrow-' + userId);
+                    if (el.style.display === 'none') {
+                        el.style.display = 'block';
+                        arr.innerText = '▲';
+                    } else {
+                        el.style.display = 'none';
+                        arr.innerText = '▼';
+                    }
+                }
             </script>
 
         {% else %}
@@ -239,6 +275,26 @@
                 </div>
             </div>
             {% endfor %}
+
+            <!-- Normal User Wallet Transaction History -->
+            <div style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
+                <h3>Wallet Transaction History 💳</h3>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; max-height: 250px; overflow-y: auto;">
+                    {% for tx in wallet_txs %}
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>{{ tx.description }}</strong><br>
+                            <small style="color: #666;">{{ tx.created_at.replace('T', ' ')[:16] }}</small>
+                        </div>
+                        <span style="font-weight: bold; font-size: 14px; color: {% if tx.transaction_type == 'Credit' %}#28a745{% else %}#dc3545{% endif %};">
+                            {% if tx.transaction_type == 'Credit' %}+{% endif %}{{ tx.amount }}
+                        </span>
+                    </div>
+                    {% else %}
+                    <div style="color: #888; font-style: italic; text-align: center; padding: 10px 0;">No transaction records found.</div>
+                    {% endfor %}
+                </div>
+            </div>
         {% endif %}
     </div>
 </div>
