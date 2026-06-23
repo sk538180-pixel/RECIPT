@@ -1004,8 +1004,8 @@ def edit_data(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
     query = supabase.table('receipts').select('id, url_path, html_content, form_data, created_at').eq('id', id)
-    if session.get('is_admin'): query = query.is_('user_id', 'null')
-    else: query = query.eq('user_id', session.get('user_id'))
+    if not session.get('is_admin'):
+        query = query.eq('user_id', session.get('user_id'))
     response = query.execute()
     
     if response.data:
@@ -1147,8 +1147,8 @@ def update_data(id):
             'html_content': final_html,
             'form_data': form_data_json
         }).eq('id', id)
-        if session.get('is_admin'): query = query.is_('user_id', 'null')
-        else: query = query.eq('user_id', session.get('user_id'))
+        if not session.get('is_admin'):
+            query = query.eq('user_id', session.get('user_id'))
         query.execute()
         
         if old_item:
@@ -1171,8 +1171,8 @@ def update_html_data(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
     query = supabase.table('receipts').select('html_content', 'url_path', 'form_data', 'created_at').eq('id', id)
-    if session.get('is_admin'): query = query.is_('user_id', 'null')
-    else: query = query.eq('user_id', session.get('user_id'))
+    if not session.get('is_admin'):
+        query = query.eq('user_id', session.get('user_id'))
     response = query.execute()
     if not response.data: return "Receipt not found", 404
     
@@ -1237,8 +1237,8 @@ def update_html_data(id):
             'url_path': url_path, 
             'html_content': html_content
         }).eq('id', id)
-        if session.get('is_admin'): query = query.is_('user_id', 'null')
-        else: query = query.eq('user_id', session.get('user_id'))
+        if not session.get('is_admin'):
+            query = query.eq('user_id', session.get('user_id'))
         query.execute()
         
         # Log to receipt_history
@@ -1268,8 +1268,8 @@ def edit(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
     query = supabase.table('receipts').select('id, url_path, html_content, created_at').eq('id', id)
-    if session.get('is_admin'): query = query.is_('user_id', 'null')
-    else: query = query.eq('user_id', session.get('user_id'))
+    if not session.get('is_admin'):
+        query = query.eq('user_id', session.get('user_id'))
     response = query.execute()
 
     if response.data:
@@ -1293,8 +1293,8 @@ def update(id):
             return "Edits are only allowed within 24 hours of receipt creation.", 403
     
     query = supabase.table('receipts').update({'html_content': new_html}).eq('id', id)
-    if session.get('is_admin'): query = query.is_('user_id', 'null')
-    else: query = query.eq('user_id', session.get('user_id'))
+    if not session.get('is_admin'):
+        query = query.eq('user_id', session.get('user_id'))
     query.execute()
     
     if old_item:
@@ -1315,8 +1315,8 @@ def delete(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
     query = supabase.table('receipts').delete().eq('id', id)
-    if session.get('is_admin'): query = query.is_('user_id', 'null')
-    else: query = query.eq('user_id', session.get('user_id'))
+    if not session.get('is_admin'):
+        query = query.eq('user_id', session.get('user_id'))
     query.execute()
     return redirect(url_for('index'))
 
