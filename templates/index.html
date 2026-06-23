@@ -16,6 +16,7 @@
         .btn-edit-data { background: #007bff; color: white; }
         .btn-edit-html { background: #ffc107; color: black; }
         .btn-delete { background: #dc3545; color: white; }
+        html { scroll-behavior: smooth; }
     </style>
 </head>
 <body>
@@ -31,6 +32,7 @@
         </div>
         <div>
             {% if not is_admin %}
+            <a href="#wallet-history-section" style="background:#17a2b8; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px; margin-right: 5px;">Wallet History</a>
             <a href="/add_money" style="background:#28a745; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px; margin-right: 5px;">+ Add Money</a>
             {% endif %}
             <a href="/logout" onclick="localStorage.clear();" style="background:#dc3545; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px;">Logout</a>
@@ -277,7 +279,7 @@
             {% endfor %}
 
             <!-- Normal User Wallet Transaction History -->
-            <div style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
+            <div id="wallet-history-section" style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
                 <h3>Wallet Transaction History 💳</h3>
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; max-height: 250px; overflow-y: auto;">
                     {% for tx in wallet_txs %}
