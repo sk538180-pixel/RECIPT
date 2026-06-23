@@ -310,7 +310,7 @@ def index():
     
     if is_admin:
         # Fetch all users
-        users_res = supabase.table('users').select('*').order('created_at', desc=True).execute()
+        users_res = supabase.table('users').select('*').order('id', desc=True).execute()
         if users_res.data:
             users = users_res.data
             
