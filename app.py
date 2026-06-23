@@ -27,6 +27,49 @@ SUPABASE_URL = "https://qtzmgxvjibivdgodcfwz.supabase.co"
 SUPABASE_KEY = "sb_publishable_mLPBhmg1wc15tJOzbRd6Qg_nu30nfMC"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+def get_json_diff(old_json_str, new_json_str):
+    try:
+        old_data = json.loads(old_json_str) if old_json_str else {}
+        new_data = json.loads(new_json_str) if new_json_str else {}
+    except Exception:
+        return []
+    
+    changes = []
+    all_keys = set(list(old_data.keys()) + list(new_data.keys()))
+    
+    labels = {
+        "District": "District",
+        "Anchal": "Anchal",
+        "Halka": "Halka",
+        "Mauja": "Mauja",
+        "Name": "Reiyat Name",
+        "Name2": "Father/Husband Name",
+        "Pata": "Address",
+        "Thana": "Thana No.",
+        "Khata": "Khata No.",
+        "Khesra": "Khesra No.",
+        "JamabandiNo": "Jamabandi No.",
+        "BhagVartaman": "Bhag Vartaman",
+        "PrishthSankhya": "Prishth Sankhya",
+        "Date": "Date",
+        "custom_url": "Link URL",
+        "jamabandi_name": "Jamabandi Name",
+        "guardian_name": "Guardian Name",
+        "halka_name": "Halka Name",
+        "mauja_name": "Mauja Name",
+        "mauja_thana_name": "Mauja/Thana No."
+    }
+    
+    for k in sorted(all_keys):
+        if k == 'Raw_Date' or k.startswith('CurrentYear') or k.startswith('NextYear') or k.startswith('StartCurrentYear') or k.startswith('StartNextYear'):
+            continue
+        old_val = old_data.get(k, '')
+        new_val = new_data.get(k, '')
+        if old_val != new_val:
+            label = labels.get(k, k)
+            changes.append(f"{label}: '{old_val}' -> '{new_val}'")
+    return changes
+
 # ================= LOGIN LOGIC =================
 @app.route('/auth/set_session', methods=['POST'])
 def auth_set_session():
@@ -214,6 +257,34 @@ def api_admin_reject_request(req_id):
     supabase.table('payment_requests').update({'status': 'Rejected'}).eq('id', req_id).execute()
     return {"status": "success", "message": "Rejected successfully"}
 
+@app.route('/api/admin/edit_history', methods=['GET'])
+def api_admin_edit_history():
+    secret = request.args.get('secret')
+    if secret != "super_admin_secret_123":
+        return {"status": "error", "message": "Unauthorized"}, 401
+        
+    history_res = supabase.table('receipt_history').select('*').order('edited_at', desc=True).limit(50).execute()
+    if history_res.data:
+        history_list = []
+        for h in history_res.data:
+            url_name = h.get('new_url') or h.get('old_url') or "Deleted Receipt"
+            changes = get_json_diff(h.get('old_form_data'), h.get('new_form_data'))
+            if not changes:
+                if h.get('old_html') != h.get('new_html'):
+                    changes = ["HTML Code manually modified"]
+                else:
+                    changes = ["URL path updated" if h.get('old_url') != h.get('new_url') else "No visual changes"]
+            
+            history_list.append({
+                "id": h['id'],
+                "receipt_id": h['receipt_id'],
+                "url": url_name,
+                "edited_at": h['edited_at'],
+                "changes": changes
+            })
+        return {"status": "success", "history": history_list}
+    return {"status": "success", "history": []}
+
 @app.route('/')
 def index():
     if not session.get('logged_in'):
@@ -232,28 +303,86 @@ def index():
     pending_payments = []
     payment_msg = session.pop('payment_msg', None)
     
+    users = []
+    grouped_receipts = {}  # {user_id: [ (id, url, display_name), ... ]}
+    legacy_receipts = []
+    recent_history = []
+    
     if is_admin:
-        response = supabase.table('receipts').select('id, url_path, html_content').is_('user_id', 'null').order('id', desc=True).execute()
-        # Admin pending payments fetch
+        # Fetch all users
+        users_res = supabase.table('users').select('*').order('created_at', desc=True).execute()
+        if users_res.data:
+            users = users_res.data
+            
+        # Fetch all receipts
+        receipts_res = supabase.table('receipts').select('id, url_path, html_content, user_id').execute()
+        if receipts_res.data:
+            for r in receipts_res.data:
+                u_id = r['user_id']
+                html = r.get('html_content', '')
+                display_name = "Naam Nahi Mila"
+                match = re.search(r'जमाबंदी रेयत का नाम :- <b>(.*?)</b>', html, re.DOTALL | re.IGNORECASE)
+                if match and match.group(1).strip():
+                    display_name = match.group(1).strip()
+                
+                item = (r['id'], r['url_path'], display_name)
+                if u_id is None:
+                    legacy_receipts.append(item)
+                else:
+                    if u_id not in grouped_receipts:
+                        grouped_receipts[u_id] = []
+                    grouped_receipts[u_id].append(item)
+        
+        # Fetch recent edit history
+        history_res = supabase.table('receipt_history').select('*').order('edited_at', desc=True).limit(50).execute()
+        if history_res.data:
+            for h in history_res.data:
+                url_name = h.get('new_url') or h.get('old_url') or "Deleted Receipt"
+                changes = get_json_diff(h.get('old_form_data'), h.get('new_form_data'))
+                if not changes:
+                    if h.get('old_html') != h.get('new_html'):
+                        changes = ["HTML Code manually modified"]
+                    else:
+                        changes = ["URL path updated" if h.get('old_url') != h.get('new_url') else "No visual changes"]
+                
+                recent_history.append({
+                    "id": h['id'],
+                    "receipt_id": h['receipt_id'],
+                    "url": url_name,
+                    "edited_at": h['edited_at'],
+                    "changes": changes
+                })
+                
+        # Fetch pending payments
         pay_res = supabase.table('payment_requests').select('*, users(email)').eq('status', 'Pending').order('created_at', desc=True).execute()
         if pay_res.data:
             pending_payments = pay_res.data
     else:
+        # Non-admin user: fetch their receipts only
         response = supabase.table('receipts').select('id, url_path, html_content').eq('user_id', user_id).order('id', desc=True).execute()
+        if response.data:
+            for r in response.data:
+                html = r.get('html_content', '')
+                display_name = "Naam Nahi Mila"
+                match = re.search(r'जमाबंदी रेयत का नाम :- <b>(.*?)</b>', html, re.DOTALL | re.IGNORECASE)
+                if match and match.group(1).strip():
+                    display_name = match.group(1).strip()
+                legacy_receipts.append((r['id'], r['url_path'], display_name))
+                
         user_res = supabase.table('users').select('wallet_balance').eq('id', user_id).execute()
         if user_res.data:
             wallet_balance = user_res.data[0]['wallet_balance']
-    
-    pages = []
-    for row in response.data:
-        html = row.get('html_content', '')
-        display_name = "Naam Nahi Mila"
-        match = re.search(r'जमाबंदी रेयत का नाम :- <b>(.*?)</b>', html, re.DOTALL | re.IGNORECASE)
-        if match and match.group(1).strip():
-            display_name = match.group(1).strip()
-        pages.append((row['id'], row['url_path'], display_name))
         
-    return render_template('index.html', pages=pages, is_admin=is_admin, wallet_balance=wallet_balance, email=email, pending_payments=pending_payments, payment_msg=payment_msg)
+    return render_template('index.html', 
+                           pages=legacy_receipts, 
+                           users=users,
+                           grouped_receipts=grouped_receipts,
+                           recent_history=recent_history,
+                           is_admin=is_admin, 
+                           wallet_balance=wallet_balance, 
+                           email=email, 
+                           pending_payments=pending_payments, 
+                           payment_msg=payment_msg)
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -624,6 +753,10 @@ def update_data(id):
 
     form_data_json = json.dumps(data)
 
+    # Fetch old receipt for history logging
+    old_res = supabase.table('receipts').select('form_data', 'html_content', 'url_path').eq('id', id).execute()
+    old_item = old_res.data[0] if old_res.data else None
+
     try:
         query = supabase.table('receipts').update({
             'url_path': url_path, 
@@ -633,6 +766,17 @@ def update_data(id):
         if session.get('is_admin'): query = query.is_('user_id', 'null')
         else: query = query.eq('user_id', session.get('user_id'))
         query.execute()
+        
+        if old_item:
+            supabase.table('receipt_history').insert({
+                'receipt_id': id,
+                'old_url': old_item.get('url_path'),
+                'new_url': url_path,
+                'old_form_data': old_item.get('form_data'),
+                'new_form_data': form_data_json,
+                'old_html': old_item.get('html_content'),
+                'new_html': final_html
+            }).execute()
     except Exception as e:
         return "URL pehle se maujud hai, kripya dusra link daalein."
         
@@ -642,7 +786,7 @@ def update_data(id):
 def update_html_data(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
-    query = supabase.table('receipts').select('html_content', 'url_path').eq('id', id)
+    query = supabase.table('receipts').select('html_content', 'url_path', 'form_data').eq('id', id)
     if session.get('is_admin'): query = query.is_('user_id', 'null')
     else: query = query.eq('user_id', session.get('user_id'))
     response = query.execute()
@@ -708,6 +852,24 @@ def update_html_data(id):
         if session.get('is_admin'): query = query.is_('user_id', 'null')
         else: query = query.eq('user_id', session.get('user_id'))
         query.execute()
+        
+        # Log to receipt_history
+        new_form_data = {
+            "jamabandi_name": jamabandi_name,
+            "guardian_name": guardian_name,
+            "halka_name": halka_name,
+            "mauja_name": mauja_name,
+            "mauja_thana_name": mauja_thana_name
+        }
+        supabase.table('receipt_history').insert({
+            'receipt_id': id,
+            'old_url': old_url,
+            'new_url': url_path,
+            'old_form_data': response.data[0].get('form_data'),
+            'new_form_data': json.dumps(new_form_data),
+            'old_html': response.data[0].get('html_content'),
+            'new_html': html_content
+        }).execute()
     except Exception as e:
         return "URL pehle se maujud hai, kripya dusra link daalein."
 
@@ -733,10 +895,27 @@ def update(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
     new_html = request.form['html_content']
+    
+    # Fetch old for history logging
+    old_res = supabase.table('receipts').select('form_data', 'html_content', 'url_path').eq('id', id).execute()
+    old_item = old_res.data[0] if old_res.data else None
+    
     query = supabase.table('receipts').update({'html_content': new_html}).eq('id', id)
     if session.get('is_admin'): query = query.is_('user_id', 'null')
     else: query = query.eq('user_id', session.get('user_id'))
     query.execute()
+    
+    if old_item:
+        supabase.table('receipt_history').insert({
+            'receipt_id': id,
+            'old_url': old_item.get('url_path'),
+            'new_url': old_item.get('url_path'),
+            'old_form_data': old_item.get('form_data'),
+            'new_form_data': old_item.get('form_data'),
+            'old_html': old_item.get('html_content'),
+            'new_html': new_html
+        }).execute()
+        
     return redirect(url_for('index'))
 
 @app.route('/delete/<int:id>')
