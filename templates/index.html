@@ -5,18 +5,98 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laggan Raseed Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .btn-submit { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .receipt-list { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-        .item { background: #f9f9f9; padding: 10px; border-bottom: 1px solid #ddd; margin-bottom: 10px; display: flex; flex-direction: column; }
-        .actions { margin-top: 10px; }
-        .actions a { text-decoration: none; padding: 5px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; margin-right: 5px; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 10px; margin: 0; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .btn-submit { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; }
+        .receipt-list { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        .item { background: #f9f9f9; padding: 10px; border-bottom: 1px solid #ddd; margin-bottom: 10px; display: flex; flex-direction: column; word-break: break-word; }
+        .actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .actions a { text-decoration: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; text-align: center; white-space: nowrap; }
         .btn-edit-data { background: #007bff; color: white; }
         .btn-edit-html { background: #ffc107; color: black; }
         .btn-delete { background: #dc3545; color: white; }
-        
+
+        /* Header Bar */
+        .header-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+        .header-info { }
+        .header-info strong { font-size: 14px; word-break: break-all; }
+        .header-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .header-btn {
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 12px;
+            text-decoration: none;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .btn-wallet { background: #17a2b8; color: white; }
+        .btn-add-money { background: #28a745; color: white; }
+        .btn-logout { background: #dc3545; color: white; }
+
+        /* Admin Pending Payment Card */
+        .payment-card {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+        }
+        .payment-card-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .payment-card-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .payment-card-actions form { flex: 1; }
+        .payment-card-actions button { width: 100%; }
+
+        /* Admin User Card */
+        .user-card-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .user-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        /* Edit History */
+        .history-header {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .history-header .history-link { color: #007bff; word-break: break-all; }
+        .history-header .history-date { color: #666; font-size: 12px; }
+
         /* Modal Popup Styles */
         .modal-overlay {
             display: none;
@@ -34,13 +114,15 @@
         }
         .modal-card {
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 12px;
             max-width: 500px;
-            width: 90%;
+            width: 92%;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             position: relative;
             animation: slideUp 0.2s ease-out;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         .modal-header {
             display: flex;
@@ -52,7 +134,7 @@
         }
         .modal-title {
             margin: 0;
-            font-size: 18px;
+            font-size: 16px;
             color: #333;
         }
         .modal-close {
@@ -69,6 +151,7 @@
             font-size: 18px;
             cursor: pointer;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
         .modal-close:hover {
             background: #dc3545;
@@ -87,25 +170,35 @@
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+
+        /* Desktop tweaks */
+        @media (min-width: 481px) {
+            body { padding: 20px; }
+            .container { padding: 25px; }
+            .header-bar { flex-direction: row; justify-content: space-between; align-items: center; }
+            .header-btn { flex: 0 0 auto; }
+            .payment-card-inner { flex-direction: row; justify-content: space-between; align-items: center; }
+            .history-header { flex-direction: row; justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: #e9ecef; border-radius: 8px;">
-        <div>
+    <div class="header-bar">
+        <div class="header-info">
             <strong>{{ email }}</strong><br>
             {% if is_admin %}
-            <span style="font-size: 14px; color: #dc3545; font-weight: bold;">Legacy Admin Mode</span>
+            <span style="font-size: 13px; color: #dc3545; font-weight: bold;">Legacy Admin Mode</span>
             {% else %}
-            <span style="font-size: 14px; color: #555;">Wallet Balance: <strong>₹{{ wallet_balance }}</strong></span>
+            <span style="font-size: 13px; color: #555;">Wallet: <strong>₹{{ wallet_balance }}</strong></span>
             {% endif %}
         </div>
-        <div>
+        <div class="header-buttons">
             {% if not is_admin %}
-            <button onclick="showWalletModal()" style="background:#17a2b8; color:white; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px; margin-right: 5px; cursor: pointer;">Wallet History</button>
-            <a href="/add_money" style="background:#28a745; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px; margin-right: 5px;">+ Add Money</a>
+            <button onclick="showWalletModal()" class="header-btn btn-wallet">Wallet History</button>
+            <a href="/add_money" class="header-btn btn-add-money">+ Add Money</a>
             {% endif %}
-            <a href="/logout" onclick="localStorage.clear();" style="background:#dc3545; color:white; text-decoration:none; padding:8px 12px; border-radius:4px; font-weight:bold; font-size: 12px;">Logout</a>
+            <a href="/logout" onclick="localStorage.clear();" class="header-btn btn-logout">Logout</a>
         </div>
     </div>
     
@@ -117,23 +210,25 @@
     
     {% if is_admin %}
     {% if pending_payments %}
-    <div style="margin-bottom: 30px; background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba;">
-        <h3 style="margin-top: 0; color: #856404;">Pending Payments (Require Approval)</h3>
+    <div style="margin-bottom: 30px; background: #fff3cd; padding: 12px; border-radius: 8px; border: 1px solid #ffeeba;">
+        <h3 style="margin-top: 0; color: #856404; font-size: 16px;">Pending Payments (Require Approval)</h3>
         {% for p in pending_payments %}
-        <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <strong>User:</strong> {{ p.users.email }} <br>
-                <strong>Amount:</strong> ₹{{ p.amount }} <br>
-                <strong>UTR:</strong> {{ p.utr_number }} <br>
-                <small style="color: #666;">{{ p.created_at[:10] }}</small>
-            </div>
-            <div>
-                <form action="/admin/approve_payment/{{ p.id }}" method="POST" style="display:inline;">
-                    <button type="submit" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Approve</button>
-                </form>
-                <form action="/admin/reject_payment/{{ p.id }}" method="POST" style="display:inline;">
-                    <button type="submit" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-left: 5px;" onclick="return confirm('Pakka reject karna hai?');">Reject</button>
-                </form>
+        <div class="payment-card">
+            <div class="payment-card-inner">
+                <div style="font-size: 13px;">
+                    <strong>User:</strong> {{ p.users.email }} <br>
+                    <strong>Amount:</strong> ₹{{ p.amount }} <br>
+                    <strong>UTR:</strong> {{ p.utr_number }} <br>
+                    <small style="color: #666;">{{ p.created_at[:10] }}</small>
+                </div>
+                <div class="payment-card-actions">
+                    <form action="/admin/approve_payment/{{ p.id }}" method="POST">
+                        <button type="submit" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Approve</button>
+                    </form>
+                    <form action="/admin/reject_payment/{{ p.id }}" method="POST">
+                        <button type="submit" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="return confirm('Pakka reject karna hai?');">Reject</button>
+                    </form>
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -236,15 +331,17 @@
             {% for u in users %}
             {% set u_id = u.id %}
             {% set u_receipts = grouped_receipts.get(u_id, []) %}
-            <div class="user-section" style="margin-bottom: 20px; background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <h3 style="margin: 0; color: #333; cursor: pointer; font-size: 16px; display: flex; justify-content: space-between; align-items: center;" onclick="toggleUserReceipts('{{ u_id }}')">
-                    <div>
-                        <strong>{{ u.email }}</strong> 
-                        <span style="font-size: 12px; font-weight: normal; color: #28a745; margin-left: 10px;">Wallet: ₹{{ u.wallet_balance }}</span>
-                        <span style="font-size: 12px; font-weight: normal; color: #666; margin-left: 10px;">({{ u_receipts|length }} Receipts)</span>
+            <div class="user-section" style="margin-bottom: 15px; background: #ffffff; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="cursor: pointer;" onclick="toggleUserReceipts('{{ u_id }}')">
+                    <div class="user-card-header">
+                        <strong style="font-size: 14px; word-break: break-all;">{{ u.email }}</strong>
+                        <div class="user-card-meta">
+                            <span style="color: #28a745;">Wallet: ₹{{ u.wallet_balance }}</span>
+                            <span style="color: #666;">({{ u_receipts|length }} Receipts)</span>
+                            <span>▼</span>
+                        </div>
                     </div>
-                    <span>▼</span>
-                </h3>
+                </div>
                 <div id="receipts-{{ u_id }}" style="display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
                     
                     <!-- User Wallet history collapsible -->
@@ -294,9 +391,9 @@
                 <div style="background: white; border-radius: 8px; border: 1px solid #ddd; padding: 15px; max-height: 450px; overflow-y: auto;">
                     {% for log in recent_history %}
                     <div style="padding: 12px; border-bottom: 1px solid #eee; margin-bottom: 10px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
-                            <span style="color: #007bff;">Link: {{ log.url[:40] }}...</span>
-                            <span style="color: #666;">{{ log.edited_at.replace('T', ' ')[:19] }}</span>
+                        <div class="history-header">
+                            <span class="history-link">Link: {{ log.url[:40] }}...</span>
+                            <span class="history-date">{{ log.edited_at.replace('T', ' ')[:19] }}</span>
                         </div>
                         <div style="font-size: 13px; color: #555; padding-left: 10px; border-left: 2px solid #6c757d;">
                             {% for change in log.changes %}
