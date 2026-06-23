@@ -9,7 +9,7 @@ import re
 import requests
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import random
 import string
 import urllib.request
@@ -69,6 +69,18 @@ def get_json_diff(old_json_str, new_json_str):
             label = labels.get(k, k)
             changes.append(f"{label}: '{old_val}' -> '{new_val}'")
     return changes
+
+def check_24h_limit(created_at_str):
+    if not created_at_str:
+        return True
+    try:
+        created_time = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+        time_diff = datetime.now(timezone.utc) - created_time
+        if time_diff.total_seconds() > 24 * 3600:
+            return False
+    except Exception:
+        pass
+    return True
 
 # ================= LOGIN LOGIC =================
 @app.route('/auth/set_session', methods=['POST'])
@@ -170,6 +182,14 @@ def api_sms_webhook():
         if user_res.data:
             new_balance = (user_res.data[0]['wallet_balance'] or 0) + int(pay_amount)
             supabase.table('users').update({'wallet_balance': new_balance}).eq('id', user_id).execute()
+            
+            # Log credit transaction
+            supabase.table('wallet_transactions').insert({
+                'user_id': user_id,
+                'amount': int(pay_amount),
+                'transaction_type': 'Credit',
+                'description': f"Payment Approved (SMS Automatic, Request ID: {payment['id']})"
+            }).execute()
         
         supabase.table('payment_requests').update({'status': 'Approved'}).eq('id', payment['id']).execute()
         return {"status": "success", "message": f"Approved {pay_amount} for user {user_id}"}
@@ -240,6 +260,14 @@ def api_admin_approve_request(req_id):
     if user_res.data:
         new_balance = (user_res.data[0]['wallet_balance'] or 0) + amount
         supabase.table('users').update({'wallet_balance': new_balance}).eq('id', user_id).execute()
+        
+        # Log credit transaction
+        supabase.table('wallet_transactions').insert({
+            'user_id': user_id,
+            'amount': amount,
+            'transaction_type': 'Credit',
+            'description': f"Payment Approved (Admin App, Request ID: {req_id})"
+        }).execute()
         
     supabase.table('payment_requests').update({'status': 'Approved'}).eq('id', req_id).execute()
     return {"status": "success", "message": "Approved successfully"}
@@ -578,6 +606,15 @@ def api_admin_receipt_update(id):
         
     return {"status": "success", "message": "Receipt updated successfully"}
 
+@app.route('/api/admin/user/wallet_history/<int:user_id>', methods=['GET'])
+def api_admin_user_wallet_history(user_id):
+    secret = request.args.get('secret')
+    if secret != "super_admin_secret_123":
+        return {"status": "error", "message": "Unauthorized"}, 401
+        
+    res = supabase.table('wallet_transactions').select('*').eq('user_id', user_id).order('created_at', desc=True).execute()
+    return {"status": "success", "transactions": res.data or []}
+
 @app.route('/')
 def index():
     if not session.get('logged_in'):
@@ -600,6 +637,7 @@ def index():
     grouped_receipts = {}  # {user_id: [ (id, url, display_name), ... ]}
     legacy_receipts = []
     recent_history = []
+    wallet_txs = []
     
     if is_admin:
         # Fetch all users
@@ -650,6 +688,17 @@ def index():
         pay_res = supabase.table('payment_requests').select('*, users(email)').eq('status', 'Pending').order('created_at', desc=True).execute()
         if pay_res.data:
             pending_payments = pay_res.data
+            
+        # Fetch all wallet transactions grouped by user
+        wallet_transactions_all = {}
+        tx_res = supabase.table('wallet_transactions').select('*').order('created_at', desc=True).execute()
+        if tx_res.data:
+            for tx in tx_res.data:
+                u_id = tx['user_id']
+                if u_id not in wallet_transactions_all:
+                    wallet_transactions_all[u_id] = []
+                wallet_transactions_all[u_id].append(tx)
+        wallet_txs = wallet_transactions_all
     else:
         # Non-admin user: fetch their receipts only
         response = supabase.table('receipts').select('id, url_path, html_content').eq('user_id', user_id).order('id', desc=True).execute()
@@ -665,6 +714,10 @@ def index():
         user_res = supabase.table('users').select('wallet_balance').eq('id', user_id).execute()
         if user_res.data:
             wallet_balance = user_res.data[0]['wallet_balance']
+            
+        # Fetch user's own wallet transactions
+        tx_res = supabase.table('wallet_transactions').select('*').eq('user_id', user_id).order('created_at', desc=True).execute()
+        wallet_txs = tx_res.data or []
         
     return render_template('index.html', 
                            pages=legacy_receipts, 
@@ -675,7 +728,8 @@ def index():
                            wallet_balance=wallet_balance, 
                            email=email, 
                            pending_payments=pending_payments, 
-                           payment_msg=payment_msg)
+                           payment_msg=payment_msg,
+                           wallet_txs=wallet_txs)
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -710,6 +764,14 @@ def approve_payment(req_id):
     if user_res.data:
         new_balance = (user_res.data[0]['wallet_balance'] or 0) + amount
         supabase.table('users').update({'wallet_balance': new_balance}).eq('id', user_id).execute()
+        
+        # Log credit transaction
+        supabase.table('wallet_transactions').insert({
+            'user_id': user_id,
+            'amount': amount,
+            'transaction_type': 'Credit',
+            'description': f"Payment Approved (Web Admin, Request ID: {req_id})"
+        }).execute()
         
     # Mark as Approved
     supabase.table('payment_requests').update({'status': 'Approved'}).eq('id', req_id).execute()
@@ -820,6 +882,14 @@ def create():
             'form_data': form_data_json,
             'user_id': user_id
         }).execute()
+        
+        if not is_admin:
+            supabase.table('wallet_transactions').insert({
+                'user_id': user_id,
+                'amount': -250,
+                'transaction_type': 'Debit',
+                'description': f"Receipt Generated (Link: {url_path})"
+            }).execute()
     except Exception as e:
         return "Ye Link pehle se kisi aur ne bana liya hai, kripya back ja kar dusra link daalein."
 
@@ -916,6 +986,14 @@ def create_from_html():
             'form_data': form_data_json,
             'user_id': user_id
         }).execute()
+        
+        if not is_admin:
+            supabase.table('wallet_transactions').insert({
+                'user_id': user_id,
+                'amount': -250,
+                'transaction_type': 'Debit',
+                'description': f"Receipt Generated (Link: {url_path})"
+            }).execute()
     except Exception as e:
         return "Ye Link pehle se kisi aur ne bana liya hai, kripya back ja kar dusra link daalein."
 
@@ -925,10 +1003,15 @@ def create_from_html():
 def edit_data(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
-    query = supabase.table('receipts').select('id, url_path, html_content, form_data').eq('id', id)
+    query = supabase.table('receipts').select('id, url_path, html_content, form_data, created_at').eq('id', id)
     if session.get('is_admin'): query = query.is_('user_id', 'null')
     else: query = query.eq('user_id', session.get('user_id'))
     response = query.execute()
+    
+    if response.data:
+        if not session.get('is_admin'):
+            if not check_24h_limit(response.data[0].get('created_at')):
+                return "Edits are only allowed within 24 hours of receipt creation.", 403
     
     if response.data and response.data[0].get('form_data'):
         form_data = json.loads(response.data[0]['form_data'])
@@ -976,6 +1059,16 @@ def edit_data(id):
 def update_data(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
+    # Fetch old receipt for validation and logging
+    old_res = supabase.table('receipts').select('form_data', 'html_content', 'url_path', 'created_at').eq('id', id).execute()
+    if not old_res.data:
+        return "Receipt not found", 404
+    old_item = old_res.data[0]
+    
+    if not session.get('is_admin'):
+        if not check_24h_limit(old_item.get('created_at')):
+            return "Edits are only allowed within 24 hours of receipt creation.", 403
+            
     url_path = request.form['custom_url'].strip().replace(" ", "")
     if url_path.startswith('/'): url_path = url_path[1:]
 
@@ -1046,9 +1139,7 @@ def update_data(id):
 
     form_data_json = json.dumps(data)
 
-    # Fetch old receipt for history logging
-    old_res = supabase.table('receipts').select('form_data', 'html_content', 'url_path').eq('id', id).execute()
-    old_item = old_res.data[0] if old_res.data else None
+    # old_item was already fetched at the start of update_data
 
     try:
         query = supabase.table('receipts').update({
@@ -1079,11 +1170,15 @@ def update_data(id):
 def update_html_data(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
-    query = supabase.table('receipts').select('html_content', 'url_path', 'form_data').eq('id', id)
+    query = supabase.table('receipts').select('html_content', 'url_path', 'form_data', 'created_at').eq('id', id)
     if session.get('is_admin'): query = query.is_('user_id', 'null')
     else: query = query.eq('user_id', session.get('user_id'))
     response = query.execute()
     if not response.data: return "Receipt not found", 404
+    
+    if not session.get('is_admin'):
+        if not check_24h_limit(response.data[0].get('created_at')):
+            return "Edits are only allowed within 24 hours of receipt creation.", 403
     
     html_content = response.data[0]['html_content']
     old_url = response.data[0]['url_path']
@@ -1172,7 +1267,7 @@ def update_html_data(id):
 def edit(id):
     if not session.get('logged_in'): return redirect(url_for('index'))
     
-    query = supabase.table('receipts').select('id, url_path, html_content').eq('id', id)
+    query = supabase.table('receipts').select('id, url_path, html_content, created_at').eq('id', id)
     if session.get('is_admin'): query = query.is_('user_id', 'null')
     else: query = query.eq('user_id', session.get('user_id'))
     response = query.execute()
@@ -1190,8 +1285,12 @@ def update(id):
     new_html = request.form['html_content']
     
     # Fetch old for history logging
-    old_res = supabase.table('receipts').select('form_data', 'html_content', 'url_path').eq('id', id).execute()
+    old_res = supabase.table('receipts').select('form_data', 'html_content', 'url_path', 'created_at').eq('id', id).execute()
     old_item = old_res.data[0] if old_res.data else None
+    
+    if old_item and not session.get('is_admin'):
+        if not check_24h_limit(old_item.get('created_at')):
+            return "Edits are only allowed within 24 hours of receipt creation.", 403
     
     query = supabase.table('receipts').update({'html_content': new_html}).eq('id', id)
     if session.get('is_admin'): query = query.is_('user_id', 'null')
