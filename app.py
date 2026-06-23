@@ -285,6 +285,299 @@ def api_admin_edit_history():
         return {"status": "success", "history": history_list}
     return {"status": "success", "history": []}
 
+@app.route('/api/admin/users_receipts', methods=['GET'])
+def api_admin_users_receipts():
+    secret = request.args.get('secret')
+    if secret != "super_admin_secret_123":
+        return {"status": "error", "message": "Unauthorized"}, 401
+        
+    users_res = supabase.table('users').select('*').order('id', desc=True).execute()
+    users_list = []
+    user_map = {}
+    
+    if users_res.data:
+        for u in users_res.data:
+            u_id = u['id']
+            user_data = {
+                "id": u_id,
+                "email": u['email'],
+                "name": u.get('name') or u['email'].split('@')[0],
+                "wallet_balance": u.get('wallet_balance', 0),
+                "receipts": []
+            }
+            users_list.append(user_data)
+            user_map[u_id] = user_data
+            
+    legacy_user = {
+        "id": -1,
+        "email": "Legacy Admin Receipts",
+        "name": "Admin",
+        "wallet_balance": 0,
+        "receipts": []
+    }
+    
+    receipts_res = supabase.table('receipts').select('id, url_path, html_content, user_id').execute()
+    if receipts_res.data:
+        for r in receipts_res.data:
+            u_id = r['user_id']
+            html = r.get('html_content', '')
+            display_name = "Naam Nahi Mila"
+            match = re.search(r'जमाबंदी रेयत का नाम :- <b>(.*?)</b>', html, re.DOTALL | re.IGNORECASE)
+            if match and match.group(1).strip():
+                display_name = match.group(1).strip()
+            
+            receipt_item = {
+                "id": r['id'],
+                "url_path": r['url_path'],
+                "display_name": display_name
+            }
+            
+            if u_id is None:
+                legacy_user["receipts"].append(receipt_item)
+            elif u_id in user_map:
+                user_map[u_id]["receipts"].append(receipt_item)
+                
+    if legacy_user["receipts"]:
+        users_list.insert(0, legacy_user)
+        
+    return {"status": "success", "users": users_list}
+
+@app.route('/api/admin/receipt/<int:id>', methods=['GET'])
+def api_admin_receipt_details(id):
+    secret = request.args.get('secret')
+    if secret != "super_admin_secret_123":
+        return {"status": "error", "message": "Unauthorized"}, 401
+        
+    res = supabase.table('receipts').select('*').eq('id', id).execute()
+    if not res.data:
+        return {"status": "error", "message": "Receipt not found"}, 404
+        
+    row = res.data[0]
+    html = row.get('html_content', '')
+    url_path = row.get('url_path', '')
+    
+    form_data = {}
+    is_direct_html = True
+    
+    if row.get('form_data'):
+        try:
+            form_data = json.loads(row['form_data'])
+            if form_data:
+                is_direct_html = False
+        except Exception:
+            pass
+            
+    if is_direct_html:
+        jamabandi = ""
+        guardian = ""
+        halka = ""
+        mauja = ""
+        mauja_thana = ""
+        
+        m1 = re.search(r'जमाबंदी रेयत का नाम :- <b>(.*?)</b>', html)
+        if m1: jamabandi = m1.group(1).strip()
+            
+        m2 = re.search(r'अभिभावक का नाम :- <b>(.*?)</b>', html)
+        if m2: guardian = m2.group(1).strip()
+            
+        m3 = re.search(r'हल्का :- <b>(.*?)</b>', html)
+        if m3: halka = m3.group(1).strip()
+            
+        m4 = re.search(r'मौजा :- <b>(.*?)</b>', html)
+        if m4: mauja = m4.group(1).strip()
+            
+        m5 = re.search(r'मौजा/थाना संख्या :- <b>(.*?)</b>', html)
+        if m5: mauja_thana = m5.group(1).strip()
+        
+        form_data = {
+            'custom_url': url_path,
+            'jamabandi_name': jamabandi,
+            'guardian_name': guardian,
+            'halka_name': halka,
+            'mauja_name': mauja,
+            'mauja_thana_name': mauja_thana
+        }
+        
+    logs = []
+    history_res = supabase.table('receipt_history').select('*').eq('receipt_id', id).order('edited_at', desc=True).execute()
+    if history_res.data:
+        for h in history_res.data:
+            changes = get_json_diff(h.get('old_form_data'), h.get('new_form_data'))
+            if not changes:
+                if h.get('old_html') != h.get('new_html'):
+                    changes = ["HTML Code manually modified"]
+                else:
+                    changes = ["URL path updated" if h.get('old_url') != h.get('new_url') else "No visual changes"]
+            logs.append({
+                "id": h['id'],
+                "edited_at": h['edited_at'],
+                "changes": changes
+            })
+            
+    return {
+        "status": "success",
+        "is_direct_html": is_direct_html,
+        "form_data": form_data,
+        "history": logs
+    }
+
+@app.route('/api/admin/receipt/update/<int:id>', methods=['POST'])
+def api_admin_receipt_update(id):
+    secret = request.args.get('secret')
+    if secret != "super_admin_secret_123":
+        return {"status": "error", "message": "Unauthorized"}, 401
+        
+    payload = request.json
+    if not payload:
+        return {"status": "error", "message": "Missing JSON body"}, 400
+        
+    is_direct_html = payload.get('is_direct_html', False)
+    form_data_input = payload.get('form_data', {})
+    
+    old_res = supabase.table('receipts').select('form_data', 'html_content', 'url_path').eq('id', id).execute()
+    if not old_res.data:
+        return {"status": "error", "message": "Receipt not found"}, 404
+        
+    old_item = old_res.data[0]
+    old_url = old_item.get('url_path')
+    
+    url_path = form_data_input.get('custom_url', '').strip().replace(" ", "")
+    if url_path.startswith('/'):
+        url_path = url_path[1:]
+        
+    if url_path != old_url:
+        while True:
+            r2 = supabase.table('receipts').select('id').eq('url_path', url_path).neq('id', id).execute()
+            if not r2.data: break
+            url_path = url_path + ''.join(random.choices(string.ascii_lowercase, k=7))
+            
+    if not is_direct_html:
+        raw_date = form_data_input.get('Raw_Date', '').strip()
+        formatted_date = form_data_input.get('Date', '').strip()
+        current_year = form_data_input.get('CurrentYear', '2024')
+        next_year = form_data_input.get('NextYear', '2025')
+        start_current_year = form_data_input.get('StartCurrentYear', '2017')
+        start_next_year = form_data_input.get('StartNextYear', '2018')
+        
+        if raw_date and len(raw_date) == 10:
+            try:
+                parsed_date = datetime.strptime(raw_date, '%Y-%m-%d')
+                formatted_date = parsed_date.strftime('%d-%m-%Y')
+                c_year_int = parsed_date.year
+                current_year = str(c_year_int)
+                next_year = str(c_year_int + 1)
+                if c_year_int % 2 == 0:
+                    s_year_int = c_year_int - 5
+                else:
+                    s_year_int = c_year_int - 4
+                start_current_year = str(s_year_int)
+                start_next_year = str(s_year_int + 1)
+            except Exception:
+                pass
+                
+        data = {
+            'custom_url': url_path,
+            'District': form_data_input.get('District', '').strip(),
+            'Anchal': form_data_input.get('Anchal', '').strip(),
+            'Halka': form_data_input.get('Halka', '').strip(),
+            'Mauja': form_data_input.get('Mauja', '').strip(),
+            'Name': form_data_input.get('Name', '').strip(),
+            'Name2': form_data_input.get('Name2', '').strip(),
+            'Pata': form_data_input.get('Pata', '').strip(),
+            'Thana': form_data_input.get('Thana', '').strip(),
+            'Khata': form_data_input.get('Khata', '').strip(),
+            'Khesra': form_data_input.get('Khesra', '').strip(),
+            'JamabandiNo': form_data_input.get('JamabandiNo', '').strip(),
+            'BhagVartaman': form_data_input.get('BhagVartaman', '').strip(),
+            'PrishthSankhya': form_data_input.get('PrishthSankhya', '').strip(),
+            'Date': formatted_date,
+            'Raw_Date': raw_date,
+            'CurrentYear': current_year,
+            'NextYear': next_year,
+            'StartCurrentYear': start_current_year,
+            'StartNextYear': start_next_year
+        }
+        
+        final_html = render_template('receipt_template.html', **data)
+        
+        full_receipt_link = request.host_url + url_path
+        qr_maker = qrcode.QRCode(version=7, error_correction=qrcode.constants.ERROR_CORRECT_Q, box_size=10, border=1)
+        qr_maker.add_data(full_receipt_link)
+        qr_maker.make(fit=True)
+        img = qr_maker.make_image(fill_color="black", back_color="white")
+        img_io = BytesIO()
+        img.save(img_io, 'PNG')
+        img_io.seek(0)
+        qr_base64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
+        qr_img_tag = f'<img src="data:image/png;base64,{qr_base64}" width="125" height="125" style="filter: blur(0.15px);">'
+        final_html = final_html.replace('Qr', qr_img_tag)
+        
+        form_data_json = json.dumps(data)
+    else:
+        html_content = old_item.get('html_content', '')
+        jamabandi_name = form_data_input.get('jamabandi_name', '').strip()
+        guardian_name = form_data_input.get('guardian_name', '').strip()
+        halka_name = form_data_input.get('halka_name', '').strip()
+        mauja_name = form_data_input.get('mauja_name', '').strip()
+        mauja_thana_name = form_data_input.get('mauja_thana_name', '').strip()
+        
+        if jamabandi_name:
+            pattern1 = re.compile(r'(जमाबंदी रेयत का नाम :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
+            html_content = pattern1.sub(rf'\g<1>{jamabandi_name}\g<3>', html_content)
+            
+        if guardian_name:
+            pattern2 = re.compile(r'(अभिभावक का नाम :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
+            html_content = pattern2.sub(rf'\g<1>{guardian_name}\g<3>', html_content)
+            
+        if halka_name:
+            pattern3 = re.compile(r'(<td width="36%">हल्का :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
+            html_content = pattern3.sub(rf'\g<1>{halka_name}\g<3>', html_content)
+            
+        if mauja_name:
+            pattern4 = re.compile(r'(<td width="35%">मौजा :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
+            html_content = pattern4.sub(rf'\g<1>{mauja_name}\g<3>', html_content)
+            
+        if mauja_thana_name:
+            pattern5 = re.compile(r'(<td width="35%">मौजा/थाना संख्या :- <b>)(.*?)(</b>)', re.DOTALL | re.IGNORECASE)
+            html_content = pattern5.sub(rf'\g<1>{mauja_thana_name}\g<3>', html_content)
+            
+        if url_path != old_url:
+            full_receipt_link = request.host_url + url_path
+            qr_maker = qrcode.QRCode(version=7, error_correction=qrcode.constants.ERROR_CORRECT_Q, box_size=10, border=1)
+            qr_maker.add_data(full_receipt_link)
+            qr_maker.make(fit=True)
+            img = qr_maker.make_image(fill_color="black", back_color="white")
+            img_io = BytesIO()
+            img.save(img_io, 'PNG')
+            img_io.seek(0)
+            qr_base64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
+            new_qr_tag = f'<img src="data:image/png;base64,{qr_base64}" width="125" height="125" style="border: none; filter: blur(0.15px);">'
+            html_content = re.sub(r'<img[^>]+src="data:image/[^;]+;base64,[^"]+"[^>]*>', new_qr_tag, html_content, count=1)
+            
+        final_html = html_content
+        form_data_json = json.dumps(form_data_input)
+        
+    try:
+        supabase.table('receipts').update({
+            'url_path': url_path,
+            'html_content': final_html,
+            'form_data': form_data_json
+        }).eq('id', id).execute()
+        
+        supabase.table('receipt_history').insert({
+            'receipt_id': id,
+            'old_url': old_url,
+            'new_url': url_path,
+            'old_form_data': old_item.get('form_data'),
+            'new_form_data': form_data_json,
+            'old_html': old_item.get('html_content'),
+            'new_html': final_html
+        }).execute()
+    except Exception as e:
+        return {"status": "error", "message": "Failed to update: " + str(e)}, 500
+        
+    return {"status": "success", "message": "Receipt updated successfully"}
+
 @app.route('/')
 def index():
     if not session.get('logged_in'):
